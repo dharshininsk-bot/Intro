@@ -412,6 +412,28 @@ function initGrid() {
     updateStats();
 }
 
+let isInitialLoadProcessed = false;
+
+function checkScannedTileStatus() {
+    if (scannedTileIndex === null || isInitialLoadProcessed) return;
+
+    const tileIdx = scannedTileIndex;
+    const tileNum = tileIdx + 1;
+    const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
+    const tileKey = `tile_${tileIdx}`;
+    const tileInfo = allTilesStateData[tileKey];
+
+    if (targetTile) {
+        isInitialLoadProcessed = true;
+        if (targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken)) {
+            const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
+            showAlreadyCompletedModal(tileNum, solver);
+        } else {
+            openMiniGameModal(tileIdx, targetTile);
+        }
+    }
+}
+
 /**
  * Realtime Tile Sync callback (Receives data from Firebase or LocalStorage)
  */
@@ -440,6 +462,9 @@ function handleRealtimeUpdate(tilesData) {
     if (brokenCount >= totalTiles) {
         triggerVictory();
     }
+
+    // Check scanned tile after initial data load
+    checkScannedTileStatus();
 }
 
 /**
@@ -686,23 +711,8 @@ window.addEventListener('load', () => {
     if (tileQuery) {
         const tileNum = parseInt(tileQuery, 10); // 1-based (1 to 16)
         if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
-            const tileIdx = tileNum - 1;
-            scannedTileIndex = tileIdx;
-
-            setTimeout(() => {
-                const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
-                if (targetTile) {
-                    const tileKey = `tile_${tileIdx}`;
-                    const tileInfo = allTilesStateData[tileKey];
-
-                    if (targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken)) {
-                        const solver = tileInfo ? tileInfo.solverName : "A player";
-                        showAlreadyCompletedModal(tileNum, solver);
-                    } else {
-                        openMiniGameModal(tileIdx, targetTile);
-                    }
-                }
-            }, 600);
+            scannedTileIndex = tileNum - 1;
+            checkScannedTileStatus();
         }
     }
 });

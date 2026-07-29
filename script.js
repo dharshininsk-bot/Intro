@@ -394,7 +394,13 @@ function initGrid() {
         tile.appendChild(label);
 
         tile.addEventListener('click', () => {
-            if (tile.classList.contains('broken') || tile.classList.contains('shattering')) {
+            const tileKey = `tile_${i}`;
+            const tileInfo = allTilesStateData[tileKey];
+            const isBroken = tile.classList.contains('broken') || tile.classList.contains('shattering') || (tileInfo && tileInfo.broken);
+
+            if (isBroken) {
+                const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
+                showAlreadyCompletedModal(i + 1, solver);
                 return;
             }
 
@@ -415,7 +421,7 @@ function initGrid() {
 let isInitialLoadProcessed = false;
 
 function checkScannedTileStatus() {
-    if (scannedTileIndex === null || isInitialLoadProcessed) return;
+    if (scannedTileIndex === null) return;
 
     const tileIdx = scannedTileIndex;
     const tileNum = tileIdx + 1;
@@ -423,12 +429,13 @@ function checkScannedTileStatus() {
     const tileKey = `tile_${tileIdx}`;
     const tileInfo = allTilesStateData[tileKey];
 
-    if (targetTile) {
-        isInitialLoadProcessed = true;
-        if (targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken)) {
+    if (targetTile && Object.keys(allTilesStateData).length >= 0) {
+        const isBroken = targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken);
+        if (isBroken) {
             const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
             showAlreadyCompletedModal(tileNum, solver);
-        } else {
+        } else if (!isInitialLoadProcessed) {
+            isInitialLoadProcessed = true;
             openMiniGameModal(tileIdx, targetTile);
         }
     }

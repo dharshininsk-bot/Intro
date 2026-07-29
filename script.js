@@ -322,6 +322,11 @@ const mgCtx = minigameCanvas.getContext('2d');
 const minigameStatus = document.getElementById('minigameStatus');
 const btnStartGame = document.getElementById('btnStartGame');
 
+// Name Prompt Modal Elements
+const namePromptModal = document.getElementById('namePromptModal');
+const playerGameNameInput = document.getElementById('playerGameNameInput');
+const btnSubmitGameName = document.getElementById('btnSubmitGameName');
+
 // Completed Modal Elements
 const completedModal = document.getElementById('completedModal');
 const completedCloseBtn = document.getElementById('completedCloseBtn');
@@ -335,6 +340,8 @@ let activeTileElement = null;
 let activeTileIndex = -1;
 let currentGameLoop = null;
 let scannedTileIndex = null; // Currently scanned tile from URL query parameter ?tile=X
+let completedModalTimeout = null;
+let allTilesStateData = {};
 
 // Game Type Definitions for Tiles 1..16
 const MINI_GAMES = [
@@ -409,6 +416,7 @@ function initGrid() {
  * Realtime Tile Sync callback (Receives data from Firebase or LocalStorage)
  */
 function handleRealtimeUpdate(tilesData) {
+    allTilesStateData = tilesData || {};
     let currentBroken = 0;
     const tiles = document.querySelectorAll('.tile');
 
@@ -438,7 +446,7 @@ function handleRealtimeUpdate(tilesData) {
  * MANDATORY METHOD: onClick(tileElement)
  * Breaks the specified tile upon completing the mini-game
  */
-function onClick(tileElement, event = null) {
+function onClick(tileElement, solverName = "A Player") {
     if (!tileElement || tileElement.classList.contains('shattering') || tileElement.classList.contains('broken')) {
         return;
     }
@@ -460,8 +468,8 @@ function onClick(tileElement, event = null) {
     const centerY = rect.top + rect.height / 2;
     spawnShatterBurst(centerX, centerY);
 
-    // Save broken state to Firebase Realtime Database
-    setTileBrokenInFirebase(tileIdx);
+    // Save broken state & solver name to Firebase Realtime Database
+    setTileBrokenInFirebase(tileIdx, solverName);
 
     setTimeout(() => {
         tileElement.classList.remove('shattering');
@@ -533,13 +541,26 @@ function closeMiniGameModal() {
     minigameModal.classList.add('hidden');
 }
 
-function showAlreadyCompletedModal(tileNumber) {
+function showAlreadyCompletedModal(tileNumber, solverName) {
     completedTileBadge.innerText = `TILE #${tileNumber}`;
-    completedMessage.innerText = `Tile #${tileNumber} has already been unlocked by another hunter!`;
+    const nameStr = solverName ? solverName : "A player";
+    completedMessage.innerHTML = `<strong style="color: var(--neon-pink); font-size: 1.1rem;">${nameStr}</strong> has already cracked the tile.`;
     completedModal.classList.remove('hidden');
+
+    // Auto disappear after 5 seconds
+    if (completedModalTimeout) {
+        clearTimeout(completedModalTimeout);
+    }
+    completedModalTimeout = setTimeout(() => {
+        closeCompletedModal();
+    }, 5000);
 }
 
 function closeCompletedModal() {
+    if (completedModalTimeout) {
+        clearTimeout(completedModalTimeout);
+        completedModalTimeout = null;
+    }
     completedModal.classList.add('hidden');
 }
 
@@ -569,10 +590,30 @@ function onMiniGameWin() {
 
     setTimeout(() => {
         closeMiniGameModal();
-        if (activeTileElement) {
-            onClick(activeTileElement);
-        }
+        openNamePromptModal();
     }, 1100);
+}
+
+function openNamePromptModal() {
+    playerGameNameInput.value = '';
+    namePromptModal.classList.remove('hidden');
+    setTimeout(() => playerGameNameInput.focus(), 200);
+}
+
+btnSubmitGameName.addEventListener('click', handleNameSubmission);
+playerGameNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        handleNameSubmission();
+    }
+});
+
+function handleNameSubmission() {
+    const enteredName = playerGameNameInput.value.trim() || "Anonymous Hunter";
+    namePromptModal.classList.add('hidden');
+
+    if (activeTileElement) {
+        onClick(activeTileElement, enteredName);
+    }
 }
 
 function onMiniGameLose(reason = "Game Over!") {
@@ -651,8 +692,12 @@ window.addEventListener('load', () => {
             setTimeout(() => {
                 const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
                 if (targetTile) {
-                    if (targetTile.classList.contains('broken')) {
-                        showAlreadyCompletedModal(tileNum);
+                    const tileKey = `tile_${tileIdx}`;
+                    const tileInfo = allTilesStateData[tileKey];
+
+                    if (targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken)) {
+                        const solver = tileInfo ? tileInfo.solverName : "A player";
+                        showAlreadyCompletedModal(tileNum, solver);
                     } else {
                         openMiniGameModal(tileIdx, targetTile);
                     }
@@ -661,4 +706,5 @@ window.addEventListener('load', () => {
         }
     }
 });
+
 

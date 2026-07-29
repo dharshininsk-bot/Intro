@@ -93,18 +93,35 @@
         </div>
     </div>
 
+    <!-- Winner Name Prompt Modal Overlay -->
+    <div id="namePromptModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span id="nameTileBadge" class="modal-badge">TILE UNLOCKED!</span>
+                <h2 class="modal-title">VICTORY! 🎉</h2>
+                <p class="modal-desc">May I know your In-Game Name?</p>
+            </div>
+            <div class="modal-body" style="padding: 15px 0;">
+                <input type="text" id="playerGameNameInput" placeholder="" style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--neon-cyan); background: rgba(10, 10, 22, 0.9); color: #fff; font-size: 1rem; outline: none; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);" />
+            </div>
+            <div class="modal-footer">
+                <button id="btnSubmitGameName" class="btn btn-primary btn-sm">Submit 🚀</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Already Completed QR Code Modal Overlay -->
     <div id="completedModal" class="modal-overlay hidden">
         <div class="modal-card">
             <button id="completedCloseBtn" class="modal-close">&times;</button>
             <div class="modal-header">
                 <span id="completedTileBadge" class="modal-badge">TILE #1</span>
-                <h2 class="modal-title">ALREADY COMPLETED! 🏆</h2>
-                <p id="completedMessage" class="modal-desc">This tile has already been unlocked by a player!</p>
+                <h2 class="modal-title">ALREADY CRACKED! 🏆</h2>
+                <p id="completedMessage" class="modal-desc">has already cracked the tile.</p>
             </div>
             <div class="modal-body" style="padding: 10px 0;">
                 <div style="font-size: 3rem; margin: 10px 0;">✨ 🔓 ✨</div>
-                <p style="font-size: 0.85rem; color: var(--neon-cyan);">Explore the area to scan another QR code and break remaining tiles!</p>
+                <p style="font-size: 0.9rem; color: var(--neon-cyan); font-weight: 600;">TRY SCANNING OTHER QR CODES AROUND THE CAMPUS</p>
             </div>
             <div class="modal-footer">
                 <button id="completedOkBtn" class="btn btn-primary btn-sm">Got It! 🚀</button>

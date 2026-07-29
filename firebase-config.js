@@ -53,15 +53,16 @@ function listenToTileUpdates(onUpdateCallback) {
 /**
  * Marks a specific tile as broken in Firebase Realtime Database
  */
-function setTileBrokenInFirebase(tileIndex) {
+function setTileBrokenInFirebase(tileIndex, solverName = "A player") {
     if (isFirebaseActive && db) {
         db.ref(`tiles/tile_${tileIndex}`).set({
             broken: true,
+            solverName: solverName,
             completedAt: Date.now()
         });
     } else {
         const localData = JSON.parse(localStorage.getItem('neon_magic_tiles')) || {};
-        localData[`tile_${tileIndex}`] = { broken: true, completedAt: Date.now() };
+        localData[`tile_${tileIndex}`] = { broken: true, solverName: solverName, completedAt: Date.now() };
         localStorage.setItem('neon_magic_tiles', JSON.stringify(localData));
 
         // Trigger manual update callback for local tab

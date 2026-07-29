@@ -320,7 +320,7 @@ const modalGameDesc = document.getElementById('modalGameDesc');
 const minigameCanvas = document.getElementById('minigameCanvas');
 const mgCtx = minigameCanvas.getContext('2d');
 const minigameStatus = document.getElementById('minigameStatus');
-const btnRetryGame = document.getElementById('btnRetryGame');
+const btnStartGame = document.getElementById('btnStartGame');
 
 // Completed Modal Elements
 const completedModal = document.getElementById('completedModal');
@@ -334,22 +334,23 @@ let brokenCount = 0;
 let activeTileElement = null;
 let activeTileIndex = -1;
 let currentGameLoop = null;
+let scannedTileIndex = null; // Currently scanned tile from URL query parameter ?tile=X
 
 // Game Type Definitions for Tiles 1..16
 const MINI_GAMES = [
     { title: "Neon Chrome Dino", desc: "Press Space or Tap to jump over obstacles! Reach 1200 points to shatter the tile.", type: "dino" },
-    { title: "Star Catcher", desc: "Click and collect 15 Pink Stars in 10 seconds! Avoid cyan trap stars.", type: "star_catcher" },
+    { title: "Star Catcher", desc: "Click and collect 15 Pink Stars in 10 seconds! ", type: "star_catcher" },
     { title: "Reflex Clicker", desc: "Click 5 glowing targets correctly within 3.5 seconds!", type: "quick_click" },
     { title: "Constellation Connect", desc: "Connect dots 1 to 8 in numerical order in 3.5s to form a heart!", type: "constellation" },
     { title: "Magical Sound Piano", desc: "Listen to the note pattern and replicate it on the neon piano!", type: "piano" },
-    { title: "Magic Rhythm Tiles", desc: "Music plays! Tap 12 falling black tiles before they hit the bottom.", type: "magic_tiles" },
+    { title: "Magic Rhythm Tiles", desc: "Music plays! Tap 12 falling neon tiles before they hit the bottom.", type: "magic_tiles" },
     { title: "Find the Star in the Jar", desc: "The star is put in a jar and shuffled. Pick the top-down jar containing the star!", type: "jar_shuffle" },
     { title: "Catch the Fast Firefly", desc: "Catch the super fast glowing firefly by clicking it!", type: "fast_firefly" },
     { title: "Tower Stacker", desc: "Stack sliding blocks up to height 10 cleanly!", type: "tower_stacker" },
     { title: "Tower of Hanoi", desc: "Solve Tower of Hanoi: move all 3 disks from Peg A to Peg C!", type: "hanoi" },
     
     // Cycles for Tiles 11-16
-    { title: "Magic Rhythm Tiles II", desc: "Tap 12 falling black tiles cleanly!", type: "magic_tiles" },
+    { title: "Magic Rhythm Tiles II", desc: "Tap 12 falling neon tiles cleanly!", type: "magic_tiles" },
     { title: "Find the Star II", desc: "Pick the correct top-down jar containing the hidden star!", type: "jar_shuffle" },
     { title: "Catch the Fast Firefly II", desc: "Tap the fast erratic firefly!", type: "fast_firefly" },
     { title: "Tower Stacker II", desc: "Stack blocks up to height 10!", type: "tower_stacker" },
@@ -386,8 +387,15 @@ function initGrid() {
         tile.appendChild(label);
 
         tile.addEventListener('click', () => {
-            if (!tile.classList.contains('broken') && !tile.classList.contains('shattering')) {
+            if (tile.classList.contains('broken') || tile.classList.contains('shattering')) {
+                return;
+            }
+
+            // Tile can only be played if scanned via QR code for this specific tile
+            if (scannedTileIndex === i) {
                 openMiniGameModal(i, tile);
+            } else {
+                alert(`🔒 TILE #${i + 1} IS LOCKED!\n\nYou must scan the physical QR code for Tile #${i + 1} to unlock and play this challenge!`);
             }
         });
 
@@ -498,14 +506,23 @@ function openMiniGameModal(tileIndex, tileElement) {
     modalTileBadge.innerText = `TILE ${tileIndex + 1}`;
     modalGameTitle.innerText = config.title;
     modalGameDesc.innerText = config.desc;
-    minigameStatus.innerText = "Ready! Tap canvas to start";
+    minigameStatus.innerText = "Press 'Start Challenge' to begin!";
     minigameStatus.className = "game-status";
-    btnRetryGame.classList.add('hidden');
+    btnStartGame.classList.remove('hidden');
+
+    // Draw initial preview on canvas
+    mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
+    mgCtx.fillStyle = '#0a0a16';
+    mgCtx.fillRect(0, 0, minigameCanvas.width, minigameCanvas.height);
+    mgCtx.fillStyle = '#00f3ff';
+    mgCtx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+    mgCtx.textAlign = 'center';
+    mgCtx.fillText(config.title, minigameCanvas.width / 2, minigameCanvas.height / 2 - 10);
+    mgCtx.fillStyle = '#b537f2';
+    mgCtx.font = '13px "Plus Jakarta Sans", sans-serif';
+    mgCtx.fillText("Click 'Start Challenge' below when ready", minigameCanvas.width / 2, minigameCanvas.height / 2 + 20);
 
     minigameModal.classList.remove('hidden');
-
-    // Delegate to minigames.js runners
-    startMiniGame(config.type);
 }
 
 function closeMiniGameModal() {
@@ -530,10 +547,13 @@ modalCloseBtn.addEventListener('click', closeMiniGameModal);
 completedCloseBtn.addEventListener('click', closeCompletedModal);
 completedOkBtn.addEventListener('click', closeCompletedModal);
 
-btnRetryGame.addEventListener('click', () => {
-    const idx = parseInt(modalTileBadge.innerText.replace('TILE ', ''), 10) - 1;
-    const config = MINI_GAMES[idx % MINI_GAMES.length];
-    startMiniGame(config.type);
+btnStartGame.addEventListener('click', () => {
+    btnStartGame.classList.add('hidden');
+    if (activeTileIndex >= 0) {
+        const config = MINI_GAMES[activeTileIndex % MINI_GAMES.length];
+        minigameStatus.innerText = "Game in progress...";
+        startMiniGame(config.type);
+    }
 });
 
 function onMiniGameWin() {
@@ -543,7 +563,7 @@ function onMiniGameWin() {
     }
     minigameStatus.innerText = "✨ CHALLENGE CLEARED! Tile Unlocked ✨";
     minigameStatus.className = "game-status win";
-    btnRetryGame.classList.add('hidden');
+    btnStartGame.classList.add('hidden');
 
     playSuccessFanfare();
 
@@ -560,9 +580,9 @@ function onMiniGameLose(reason = "Game Over!") {
         cancelAnimationFrame(currentGameLoop);
         currentGameLoop = null;
     }
-    minigameStatus.innerText = `❌ ${reason}`;
+    minigameStatus.innerText = "OOPS... NICE TRY!! TRY SCANNING OTHER QR CODES AROUND THE CAMPUS";
     minigameStatus.className = "game-status lose";
-    btnRetryGame.classList.remove('hidden');
+    btnStartGame.classList.add('hidden');
 }
 
 function startMiniGame(type) {
@@ -626,6 +646,7 @@ window.addEventListener('load', () => {
         const tileNum = parseInt(tileQuery, 10); // 1-based (1 to 16)
         if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
             const tileIdx = tileNum - 1;
+            scannedTileIndex = tileIdx;
 
             setTimeout(() => {
                 const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
@@ -640,3 +661,4 @@ window.addEventListener('load', () => {
         }
     }
 });
+

@@ -29,20 +29,18 @@ function getCanvasCoords(e, canvasEl) {
 // Helper to bind both mouse and touch events
 function bindCanvasInteraction(canvasEl, handler) {
     const wrappedHandler = (e) => {
-        if (e.type === 'touchstart') {
+        if (e.cancelable) {
             e.preventDefault();
         }
         const coords = getCanvasCoords(e, canvasEl);
         handler(coords, e);
     };
 
-    canvasEl.onmousedown = wrappedHandler;
-    canvasEl.ontouchstart = wrappedHandler;
+    canvasEl.onpointerdown = wrappedHandler;
 }
 
 function clearCanvasInteraction(canvasEl) {
-    canvasEl.onmousedown = null;
-    canvasEl.ontouchstart = null;
+    canvasEl.onpointerdown = null;
 }
 
 

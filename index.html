@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magical Logo Unveil - QR Hunt & Realtime Sync</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Fullscreen Canvas for Neon Butterflies & Magical Particles -->
+    <canvas id="butterflyCanvas"></canvas>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title-badge">NEON QR TREASURE HUNT</div>
+            <h1 class="title">MYSTICAL LOGO REVEAL</h1>
+            <p class="subtitle">Scan physical QR codes around the venue to unlock and shatter each tile!</p>
+        </header>
+
+        <!-- Main Stage Container -->
+        <main class="stage-container">
+            <div class="logo-frame" id="logoFrame">
+                <!-- Background Neon Glow -->
+                <div class="neon-backdrop-glow"></div>
+
+                <!-- Hidden Logo Image -->
+                <img id="logoImage" src="logo_trial.jpg" alt="Hidden Logo" />
+
+                <!-- Overlay Tile Grid (4x4) -->
+                <div id="tileGrid" class="tile-grid"></div>
+
+                <!-- Win Overlay -->
+                <div id="winBanner" class="win-banner hidden">
+                    <div class="win-content">
+                        <span class="win-icon">✨</span>
+                        <h2 class="win-title">ALL TILES UNLOCKED!</h2>
+                        <p class="win-text">The magic emblem has been fully unveiled</p>
+                        <button id="btnRehide" class="btn btn-sm btn-primary">Play Again 🔄</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Stats Panel -->
+        <section class="controls-panel">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="stat-label">TILES LEFT</span>
+                    <span id="tilesLeft" class="stat-value">16</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">PROGRESS</span>
+                    <span id="progressText" class="stat-value">0%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">GRID</span>
+                    <span class="stat-value">4 × 4</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar-fill"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Mini-Game Modal Overlay -->
+    <div id="minigameModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button id="modalCloseBtn" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <span id="modalTileBadge" class="modal-badge">TILE 1</span>
+                <h2 id="modalGameTitle" class="modal-title">Mini Game Title</h2>
+                <p id="modalGameDesc" class="modal-desc">Game instructions go here</p>
+            </div>
+
+            <div class="modal-body">
+                <div id="minigameCanvasContainer" class="game-container">
+                    <canvas id="minigameCanvas" width="440" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div id="minigameStatus" class="game-status">Ready to play!</div>
+                <button id="btnRetryGame" class="btn btn-primary btn-sm hidden">Try Again 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Already Completed QR Code Modal Overlay -->
+    <div id="completedModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button id="completedCloseBtn" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <span id="completedTileBadge" class="modal-badge">TILE #1</span>
+                <h2 class="modal-title">ALREADY COMPLETED! 🏆</h2>
+                <p id="completedMessage" class="modal-desc">This tile has already been unlocked by a player!</p>
+            </div>
+            <div class="modal-body" style="padding: 10px 0;">
+                <div style="font-size: 3rem; margin: 10px 0;">✨ 🔓 ✨</div>
+                <p style="font-size: 0.85rem; color: var(--neon-cyan);">Explore the area to scan another QR code and break remaining tiles!</p>
+            </div>
+            <div class="modal-footer">
+                <button id="completedOkBtn" class="btn btn-primary btn-sm">Got It! 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="minigames.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -429,22 +429,27 @@ function checkScannedTileStatus() {
     const tileKey = `tile_${tileIdx}`;
     const tileInfo = allTilesStateData[tileKey];
 
-    if (targetTile) {
+    if (!targetTile) return;
+
+    const isBroken = targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken);
+
+    if (isBroken) {
         isInitialLoadProcessed = true;
-        const isBroken = targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken);
-        if (isBroken) {
-            const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
-            showAlreadyCompletedModal(tileNum, solver);
-        } else {
-            openMiniGameModal(tileIdx, targetTile);
-        }
+        const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
+        showAlreadyCompletedModal(tileNum, solver);
+    } else if (hasReceivedRealtimeData) {
+        isInitialLoadProcessed = true;
+        openMiniGameModal(tileIdx, targetTile);
     }
 }
+
+let hasReceivedRealtimeData = false;
 
 /**
  * Realtime Tile Sync callback (Receives data from Firebase or LocalStorage)
  */
 function handleRealtimeUpdate(tilesData) {
+    hasReceivedRealtimeData = true;
     allTilesStateData = tilesData || {};
     let currentBroken = 0;
     const tiles = document.querySelectorAll('.tile');
@@ -725,6 +730,11 @@ window.addEventListener('load', () => {
         if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
             scannedTileIndex = tileNum - 1;
             checkScannedTileStatus();
+
+            // Safety fallback if database sync takes extra time over network
+            setTimeout(() => {
+                checkScannedTileStatus();
+            }, 600);
         }
     }
 });

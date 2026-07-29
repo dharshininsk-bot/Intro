@@ -421,7 +421,7 @@ function initGrid() {
 let isInitialLoadProcessed = false;
 
 function checkScannedTileStatus() {
-    if (scannedTileIndex === null) return;
+    if (scannedTileIndex === null || isInitialLoadProcessed) return;
 
     const tileIdx = scannedTileIndex;
     const tileNum = tileIdx + 1;
@@ -429,13 +429,13 @@ function checkScannedTileStatus() {
     const tileKey = `tile_${tileIdx}`;
     const tileInfo = allTilesStateData[tileKey];
 
-    if (targetTile && Object.keys(allTilesStateData).length >= 0) {
+    if (targetTile) {
+        isInitialLoadProcessed = true;
         const isBroken = targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken);
         if (isBroken) {
             const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
             showAlreadyCompletedModal(tileNum, solver);
-        } else if (!isInitialLoadProcessed) {
-            isInitialLoadProcessed = true;
+        } else {
             openMiniGameModal(tileIdx, targetTile);
         }
     }
@@ -548,7 +548,10 @@ function openMiniGameModal(tileIndex, tileElement) {
     modalGameDesc.innerText = config.desc;
     minigameStatus.innerText = "Press 'Start Challenge' to begin!";
     minigameStatus.className = "game-status";
+    
+    // Ensure start button is visible and active
     btnStartGame.classList.remove('hidden');
+    btnStartGame.style.display = 'inline-block';
 
     // Draw initial preview on canvas
     mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
@@ -574,6 +577,7 @@ function closeMiniGameModal() {
 }
 
 function showAlreadyCompletedModal(tileNumber, solverName) {
+    closeMiniGameModal(); // Ensure game canvas/modal is completely hidden
     completedTileBadge.innerText = `TILE #${tileNumber}`;
     const nameStr = solverName ? solverName : "A player";
     completedMessage.innerHTML = `<strong style="color: var(--neon-pink); font-size: 1.1rem;">${nameStr}</strong> has already cracked the tile.`;
@@ -602,6 +606,7 @@ completedOkBtn.addEventListener('click', closeCompletedModal);
 
 btnStartGame.addEventListener('click', () => {
     btnStartGame.classList.add('hidden');
+    btnStartGame.style.display = 'none';
     if (activeTileIndex >= 0) {
         const config = MINI_GAMES[activeTileIndex % MINI_GAMES.length];
         minigameStatus.innerText = "Game in progress...";

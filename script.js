@@ -419,31 +419,28 @@ function initGrid() {
 }
 
 let isInitialLoadProcessed = false;
+let hasReceivedRealtimeData = false;
 
 function checkScannedTileStatus() {
     if (scannedTileIndex === null || isInitialLoadProcessed) return;
 
     const tileIdx = scannedTileIndex;
     const tileNum = tileIdx + 1;
-    const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
     const tileKey = `tile_${tileIdx}`;
     const tileInfo = allTilesStateData[tileKey];
+    const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
 
-    if (!targetTile) return;
-
-    const isBroken = targetTile.classList.contains('broken') || (tileInfo && tileInfo.broken);
+    const isBroken = (tileInfo && tileInfo.broken) || (targetTile && targetTile.classList.contains('broken'));
 
     if (isBroken) {
         isInitialLoadProcessed = true;
         const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
         showAlreadyCompletedModal(tileNum, solver);
-    } else if (hasReceivedRealtimeData) {
+    } else if (hasReceivedRealtimeData && targetTile) {
         isInitialLoadProcessed = true;
         openMiniGameModal(tileIdx, targetTile);
     }
 }
-
-let hasReceivedRealtimeData = false;
 
 /**
  * Realtime Tile Sync callback (Receives data from Firebase or LocalStorage)
@@ -708,35 +705,23 @@ function startMiniGame(type) {
     }
 }
 
-// Rehide / Reset Listener
-btnRehide.addEventListener('click', () => {
-    resetFirebaseTiles();
-});
+// Detect QR Code URL Query Parameter immediately (e.g., index.html?tile=3)
+(function parseURLParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tileQuery = urlParams.get('tile');
+    if (tileQuery) {
+        const tileNum = parseInt(tileQuery, 10); // 1-based (1 to 16)
+        if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
+            scannedTileIndex = tileNum - 1;
+        }
+    }
+})();
 
 // Startup Initialization & Realtime Subscription
 initGrid();
 
 listenToTileUpdates((tilesData) => {
     handleRealtimeUpdate(tilesData);
-});
-
-// Detect QR Code URL Query Parameter (e.g., index.html?tile=3)
-window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tileQuery = urlParams.get('tile');
-
-    if (tileQuery) {
-        const tileNum = parseInt(tileQuery, 10); // 1-based (1 to 16)
-        if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
-            scannedTileIndex = tileNum - 1;
-            checkScannedTileStatus();
-
-            // Safety fallback if database sync takes extra time over network
-            setTimeout(() => {
-                checkScannedTileStatus();
-            }, 600);
-        }
-    }
 });
 
 

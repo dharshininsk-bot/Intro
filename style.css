@@ -169,10 +169,10 @@ body {
     height: 100%;
     z-index: 5;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 4px;
-    padding: 4px;
+    grid-template-columns: repeat(var(--grid-cols, 7), 1fr);
+    grid-template-rows: repeat(var(--grid-rows, 7), 1fr);
+    gap: 3px;
+    padding: 3px;
 }
 
 /* Individual Tile Styling */
@@ -180,16 +180,16 @@ body {
     position: relative;
     background: linear-gradient(145deg, rgba(25, 30, 60, 0.95), rgba(12, 14, 32, 0.98));
     border: 1px solid rgba(0, 243, 255, 0.35);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     color: rgba(0, 243, 255, 0.9);
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     font-weight: 700;
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 border-color 0.2s ease, 
@@ -197,19 +197,22 @@ body {
     overflow: hidden;
     backdrop-filter: blur(4px);
     touch-action: manipulation;
+    padding: 2px;
 }
 
 .tile-number {
-    font-size: 0.6rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.48rem;
+    color: rgba(255, 255, 255, 0.6);
     position: absolute;
-    top: 4px;
-    left: 6px;
+    top: 2px;
+    left: 3px;
+    font-weight: 600;
 }
 
 .tile-icon {
-    font-size: 1.15rem;
-    filter: drop-shadow(0 0 6px var(--neon-cyan));
+    font-size: 0.82rem;
+    filter: drop-shadow(0 0 4px var(--neon-cyan));
+    margin-top: 3px;
 }
 
 .tile:hover, .tile:active {
@@ -558,57 +561,87 @@ body {
 }
 
 /* ==========================================
- * SPIN WHEEL STYLING & ANIMATION
+ * HORIZONTAL SPINNER REEL STYLING
  * ========================================== */
 .spin-modal-card {
-    max-width: 480px;
-    background: rgba(10, 12, 32, 0.97);
-    border: 2px solid var(--neon-pink);
-    box-shadow: 0 0 50px rgba(255, 0, 127, 0.35), inset 0 0 25px rgba(0, 243, 255, 0.1);
+    max-width: 580px;
+    width: 95%;
+    background: rgba(10, 12, 32, 0.98);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 50px rgba(0, 243, 255, 0.35), inset 0 0 25px rgba(255, 0, 127, 0.15);
+    border-radius: 18px;
 }
 
 .spin-modal-body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px 0;
+    padding: 8px 0;
+    width: 100%;
 }
 
-.wheel-wrapper {
+.spinner-wrapper {
     position: relative;
-    width: 340px;
-    height: 340px;
-    max-width: 82vw;
-    max-height: 82vw;
+    width: 100%;
+    max-width: 520px;
+    height: 130px;
+    background: #060818;
+    border-radius: 12px;
+    border: 2px solid rgba(0, 243, 255, 0.4);
+    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 243, 255, 0.2);
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    margin: 6px 0;
 }
 
-.wheel-pointer {
+.spinner-indicator-line {
     position: absolute;
-    top: -14px;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 3px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--neon-gold), #ffffff, var(--neon-gold));
+    box-shadow: 0 0 12px var(--neon-gold), 0 0 24px #ffffff;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.spinner-indicator-top {
+    position: absolute;
+    top: 2px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 20;
-    font-size: 1.8rem;
+    z-index: 16;
+    font-size: 1.1rem;
     color: var(--neon-gold);
-    text-shadow: 0 0 15px var(--neon-gold), 0 0 30px #ffffff;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+    text-shadow: 0 0 10px var(--neon-gold);
+    pointer-events: none;
+    line-height: 1;
     animation: pointerPulse 1.2s infinite alternate ease-in-out;
 }
 
-@keyframes pointerPulse {
-    0% { transform: translateX(-50%) translateY(0); }
-    100% { transform: translateX(-50%) translateY(4px); }
+.spinner-indicator-bottom {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 16;
+    font-size: 1.1rem;
+    color: var(--neon-gold);
+    text-shadow: 0 0 10px var(--neon-gold);
+    pointer-events: none;
+    line-height: 1;
 }
 
-#wheelCanvas {
+#spinnerCanvas {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.6);
-    background: #050716;
+    display: block;
+    cursor: pointer;
+    background: transparent;
 }
 
 /* ==========================================

@@ -37,11 +37,11 @@
             <div class="stats-row">
                 <div class="stat-card">
                     <span class="stat-label">REMAINING TILES</span>
-                    <span id="remTilesCount" class="stat-value">16</span>
+                    <span id="remTilesCount" class="stat-value">49</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">TILES CRACKED</span>
-                    <span id="unlockedTilesCount" class="stat-value">0 / 16</span>
+                    <span id="unlockedTilesCount" class="stat-value">0 / 49</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">ACTIVE HUNTERS</span>
@@ -190,12 +190,26 @@
         const leaderboardChart = document.getElementById('leaderboardChart');
         const lbTileGrid = document.getElementById('lbTileGrid');
 
-        const TILE_ICONS = ['🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩', '🎶', '💫', '⚡', '🏢', '🏛️', '👑'];
+        const GRID_COLS = 7;
+        const GRID_ROWS = 7;
+        const TOTAL_TILES = GRID_COLS * GRID_ROWS; // 49
+
+        const TILE_ICONS = [
+            '🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩',
+            '🎶', '💫', '⚡', '🏢', '🏛️', '👑', '🔥', '💎', '🚀', '🔮',
+            '🛸', '🎯', '🌟', '🕹️', '👾', '🌈', '🌌', '⚡', '🌀', '🏆',
+            '🗝️', '🛡️', '⚔️', '🪄', '🎩', '🎲', '♟️', '🎳', '🎸', '🥁',
+            '🎺', '🎻', '🪐', '☄️', '🌙', '☀️', '🌋', '🌊', '🌴'
+        ];
         let previousTilesData = null;
 
         function renderGrid(tilesData) {
+            if (!lbTileGrid) return;
             lbTileGrid.innerHTML = '';
-            for (let i = 0; i < 16; i++) {
+            lbTileGrid.style.setProperty('--grid-cols', GRID_COLS);
+            lbTileGrid.style.setProperty('--grid-rows', GRID_ROWS);
+
+            for (let i = 0; i < TOTAL_TILES; i++) {
                 const key = `tile_${i}`;
                 const info = tilesData[key];
                 const isBroken = info && info.broken;
@@ -215,8 +229,8 @@
                 icon.innerText = isBroken ? '🔓' : TILE_ICONS[i % TILE_ICONS.length];
 
                 const label = document.createElement('span');
-                label.style.fontSize = '0.6rem';
-                label.innerText = isBroken ? (info.solverName || 'CRACKED') : `TILE ${i + 1}`;
+                label.style.fontSize = '0.5rem';
+                label.innerText = isBroken ? (info.solverName || 'CRACKED') : `T${i + 1}`;
 
                 tile.appendChild(num);
                 tile.appendChild(icon);
@@ -230,7 +244,7 @@
 
             // Check for newly cracked tiles and fire toasts
             if (previousTilesData) {
-                for (let i = 0; i < 16; i++) {
+                for (let i = 0; i < TOTAL_TILES; i++) {
                     const key = `tile_${i}`;
                     const prev = previousTilesData[key];
                     const curr = tilesData[key];
@@ -246,7 +260,7 @@
             let crackedCount = 0;
             const playerStats = {};
 
-            for (let i = 0; i < 16; i++) {
+            for (let i = 0; i < TOTAL_TILES; i++) {
                 const key = `tile_${i}`;
                 const info = tilesData[key];
                 if (info && info.broken) {
@@ -261,10 +275,10 @@
             }
 
             // Update stats row
-            const remaining = 16 - crackedCount;
+            const remaining = TOTAL_TILES - crackedCount;
             remTilesCount.innerText = remaining;
-            unlockedTilesCount.innerText = `${crackedCount} / 16`;
-            lbProgressBar.style.width = Math.round((crackedCount / 16) * 100) + '%';
+            unlockedTilesCount.innerText = `${crackedCount} / ${TOTAL_TILES}`;
+            lbProgressBar.style.width = Math.round((crackedCount / TOTAL_TILES) * 100) + '%';
 
             // Convert to array and sort descending
             const leaderboard = Object.keys(playerStats).map(name => ({
@@ -288,7 +302,7 @@
 
                 leaderboard.forEach((player, idx) => {
                     const rankMedal = idx === 0 ? '🥇 1st' : (idx === 1 ? '🥈 2nd' : (idx === 2 ? '🥉 3rd' : `#${idx + 1}`));
-                    const barPct = Math.max(8, Math.round((player.count / 16) * 100));
+                    const barPct = Math.max(8, Math.round((player.count / TOTAL_TILES) * 100));
 
                     const row = document.createElement('div');
                     row.className = 'bar-row';

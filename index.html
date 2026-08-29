@@ -50,7 +50,7 @@
             <div class="stats-row">
                 <div class="stat-card">
                     <span class="stat-label">TILES LEFT</span>
-                    <span id="tilesLeft" class="stat-value">16</span>
+                    <span id="tilesLeft" class="stat-value">49</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">PROGRESS</span>
@@ -72,7 +72,7 @@
                 style="display: flex; gap: 8px; margin-top: 4px; justify-content: center; width: 100%;">
                 <button id="btnOpenSpinWheel" class="btn btn-primary"
                     style="flex: 2; font-size: 0.82rem; padding: 12px;">
-                    🎡 SPIN WHEEL TO SELECT TILE
+                    🎰 SPIN TO SELECT TILE
                 </button>
                 <a id="btnRankings" href="leaderboard.html" class="btn btn-primary"
                     style="flex: 1; text-decoration: none; font-size: 0.82rem; padding: 12px; text-align: center;">
@@ -82,14 +82,14 @@
         </section>
     </div>
 
-    <!-- Spin Wheel Modal Overlay -->
+    <!-- Spin Reel Modal Overlay -->
     <div id="spinWheelModal" class="modal-overlay hidden">
         <div class="modal-card spin-modal-card">
             <button id="spinModalCloseBtn" class="modal-close">&times;</button>
             <div class="modal-header">
-                <span class="modal-badge">NEON WHEEL</span>
-                <h2 class="modal-title">SPIN TO UNLOCK TILE 🎡</h2>
-                <p class="modal-desc">16 Tile Numbers & 16 Misses! Spin to claim your next tile access.</p>
+                <span class="modal-badge">NEON SPINNER</span>
+                <h2 class="modal-title">SPIN TO UNLOCK TILE 🎰</h2>
+                <p class="modal-desc">Horizontal reel scrolling! Spin to land on your next tile challenge.</p>
                 <div id="playerDisplayTag" class="player-tag"
                     style="margin-top: 6px; font-size: 0.78rem; color: var(--neon-cyan);">
                     Player: <strong id="spinPlayerNameDisplay">Hunter</strong>
@@ -97,14 +97,17 @@
             </div>
 
             <div class="modal-body spin-modal-body">
-                <div class="wheel-wrapper">
-                    <div class="wheel-pointer">▼</div>
-                    <canvas id="wheelCanvas" width="340" height="340"></canvas>
+                <div class="spinner-wrapper">
+                    <div class="spinner-indicator-top">▼</div>
+                    <div class="spinner-indicator-line"></div>
+                    <div class="spinner-indicator-bottom">▲</div>
+                    <canvas id="spinnerCanvas" width="520" height="130"></canvas>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <div id="wheelStatus" class="game-status">Click center hub SPIN to spin! 🎡</div>
+                <div id="wheelStatus" class="game-status">Click SPIN to roll the horizontal reel! 🎰</div>
+                <button id="btnSpinReel" class="btn btn-primary btn-sm" style="padding: 9px 28px; font-size: 0.85rem; margin-top: 4px;">SPIN REEL 🎰</button>
             </div>
         </div>
     </div>

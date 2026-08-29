@@ -323,13 +323,14 @@ const mgCtx = minigameCanvas.getContext('2d');
 const minigameStatus = document.getElementById('minigameStatus');
 const btnStartGame = document.getElementById('btnStartGame');
 
-// Spin Wheel Modal Elements
+// Spin Reel Modal Elements
 const spinWheelModal = document.getElementById('spinWheelModal');
 const spinModalCloseBtn = document.getElementById('spinModalCloseBtn');
 const btnOpenSpinWheel = document.getElementById('btnOpenSpinWheel');
 const btnRankings = document.getElementById('btnRankings');
-const wheelCanvas = document.getElementById('wheelCanvas');
-const wCtx = wheelCanvas.getContext('2d');
+const spinnerCanvas = document.getElementById('spinnerCanvas') || document.getElementById('wheelCanvas');
+const sCtx = spinnerCanvas ? spinnerCanvas.getContext('2d') : null;
+const btnSpinReel = document.getElementById('btnSpinReel');
 const wheelStatus = document.getElementById('wheelStatus');
 
 // Player Name Modal & Storage
@@ -355,7 +356,13 @@ const completedMessage = document.getElementById('completedMessage');
 // Side Toast Container Element
 const sideToastContainer = document.getElementById('sideToastContainer');
 
-let totalTiles = 16;
+// ==========================================
+// DYNAMIC GRID & TOTAL TILES CONFIGURATION
+// ==========================================
+const GRID_COLS = 7;
+const GRID_ROWS = 7;
+const TOTAL_TILES = GRID_COLS * GRID_ROWS; // 49
+let totalTiles = TOTAL_TILES;
 let brokenCount = 0;
 let activeTileElement = null;
 let activeTileIndex = -1;
@@ -453,11 +460,49 @@ function showSideToast(message) {
 }
 
 // ==========================================
-// 3.1 SPIN WHEEL ENGINE (DYNAMIC: REMOVES BROKEN TILES & MATCHING MISSES)
+// 3.1 DYNAMIC GAME ALLOCATION & ICONS
+// ==========================================
+const BASE_GAME_TYPES = [
+    { type: "dino", title: "Neon Chrome Dino", desc: "Press Space or Tap to jump over obstacles! Reach 1200 points to shatter the tile." },
+    { type: "star_catcher", title: "Star Catcher", desc: "Click and collect 15 Pink Stars in 10 seconds!" },
+    { type: "quick_click", title: "Reflex Clicker", desc: "Click 5 glowing targets correctly within 3.5 seconds!" },
+    { type: "constellation", title: "Constellation Connect", desc: "Connect dots 1 to 8 in numerical order in 3.5s to form a heart!" },
+    { type: "piano", title: "Magical Sound Piano", desc: "Listen to the note pattern and replicate it on the neon piano!" },
+    { type: "magic_tiles", title: "Magic Rhythm Tiles", desc: "Music plays! Tap 12 falling neon tiles before they hit the bottom." },
+    { type: "jar_shuffle", title: "Find the Star in the Jar", desc: "The star is put in a jar and shuffled. Pick the jar containing the star!" },
+    { type: "fast_firefly", title: "Catch the Fast Firefly", desc: "Catch the super fast glowing firefly by clicking it!" },
+    { type: "tower_stacker", title: "Tower Stacker", desc: "Stack sliding blocks up to height 10 cleanly!" },
+    { type: "hanoi", title: "Tower of Hanoi", desc: "Solve Tower of Hanoi: move all 3 disks from Peg A to Peg C!" }
+];
+
+function getGameConfigForTile(tileIndex) {
+    const gameIdx = (tileIndex * 7 + (tileIndex % 3) * 5 + 3) % BASE_GAME_TYPES.length;
+    const base = BASE_GAME_TYPES[gameIdx];
+    const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+    const cycle = Math.floor(tileIndex / BASE_GAME_TYPES.length);
+    const suffix = cycle > 0 ? ` ${romanNumerals[cycle % romanNumerals.length] || (cycle + 1)}` : "";
+
+    return {
+        type: base.type,
+        title: `${base.title}${suffix}`,
+        desc: base.desc
+    };
+}
+
+const TILE_ICONS = [
+    '🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩',
+    '🎶', '💫', '⚡', '🏢', '🏛️', '👑', '🔥', '💎', '🚀', '🔮',
+    '🛸', '🎯', '🌟', '🕹️', '👾', '🌈', '🌌', '⚡', '🌀', '🏆',
+    '🗝️', '🛡️', '⚔️', '🪄', '🎩', '🎲', '♟️', '🎳', '🎸', '🥁',
+    '🎺', '🎻', '🪐', '☄️', '🌙', '☀️', '🌋', '🌊', '🌴'
+];
+
+// ==========================================
+// 3.2 HORIZONTAL SPINNER REEL ENGINE
 // ==========================================
 function getActiveWheelSlots() {
     const activeSlots = [];
-    for (let i = 1; i <= 16; i++) {
+    for (let i = 1; i <= TOTAL_TILES; i++) {
         const tileIdx = i - 1;
         const tileKey = `tile_${tileIdx}`;
         const tileInfo = allTilesStateData[tileKey];
@@ -473,126 +518,166 @@ function getActiveWheelSlots() {
 }
 
 let isWheelSpinning = false;
-let wheelAngle = 0;
-let wheelSpeed = 0;
+let scrollX = 0;
+let scrollSpeed = 0;
 let wheelAnimId = null;
 let lastSegmentTickIndex = -1;
 
-function drawSpinWheel() {
-    if (!wheelCanvas) return;
-    const width = wheelCanvas.width;
-    const height = wheelCanvas.height;
+const CARD_WIDTH = 96;
+const CARD_GAP = 12;
+const STEP = CARD_WIDTH + CARD_GAP; // 108px per card slot
+
+function drawHorizontalSpinner() {
+    if (!spinnerCanvas || !sCtx) return;
+    const width = spinnerCanvas.width;
+    const height = spinnerCanvas.height;
     const cx = width / 2;
     const cy = height / 2;
-    const outerRadius = width / 2 - 10;
-    const innerRadius = 38;
 
-    wCtx.clearRect(0, 0, width, height);
+    sCtx.clearRect(0, 0, width, height);
 
     const activeSlots = getActiveWheelSlots();
     const totalSlots = activeSlots.length;
 
     if (totalSlots === 0) {
-        wCtx.save();
-        wCtx.fillStyle = '#0a0d24';
-        wCtx.strokeStyle = '#ffe600';
-        wCtx.lineWidth = 3;
-        wCtx.shadowColor = '#ffe600';
-        wCtx.shadowBlur = 12;
-        wCtx.beginPath();
-        wCtx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
-        wCtx.fill();
-        wCtx.stroke();
+        sCtx.save();
+        sCtx.fillStyle = '#0a0d24';
+        sCtx.strokeStyle = '#ffe600';
+        sCtx.lineWidth = 3;
+        sCtx.beginPath();
+        if (sCtx.roundRect) {
+            sCtx.roundRect(10, 10, width - 20, height - 20, 12);
+        } else {
+            sCtx.rect(10, 10, width - 20, height - 20);
+        }
+        sCtx.fill();
+        sCtx.stroke();
 
-        wCtx.fillStyle = '#ffe600';
-        wCtx.font = 'bold 16px "Orbitron", sans-serif';
-        wCtx.textAlign = 'center';
-        wCtx.textBaseline = 'middle';
-        wCtx.fillText('ALL CLEARED! 🏆', cx, cy);
-        wCtx.restore();
+        sCtx.fillStyle = '#ffe600';
+        sCtx.font = 'bold 18px "Orbitron", sans-serif';
+        sCtx.textAlign = 'center';
+        sCtx.textBaseline = 'middle';
+        sCtx.fillText('ALL TILES CLEARED! 🏆', cx, cy);
+        sCtx.restore();
         return;
     }
 
-    const arcSize = (Math.PI * 2) / totalSlots;
+    const trackLength = totalSlots * STEP;
+    const normalizedScroll = ((scrollX % trackLength) + trackLength) % trackLength;
 
-    // Outer Glow Ring
-    wCtx.save();
-    wCtx.shadowColor = '#00f3ff';
-    wCtx.shadowBlur = 16;
-    wCtx.strokeStyle = '#00f3ff';
-    wCtx.lineWidth = 4;
-    wCtx.beginPath();
-    wCtx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
-    wCtx.stroke();
-    wCtx.restore();
+    const visibleCount = Math.ceil(width / STEP) + 3;
+    const centerSlotFloat = normalizedScroll / STEP;
+    const startIdx = Math.floor(centerSlotFloat) - Math.floor(visibleCount / 2);
 
-    // Render Slices
-    for (let i = 0; i < totalSlots; i++) {
-        const slot = activeSlots[i];
-        const startAngle = wheelAngle + i * arcSize - Math.PI / 2;
-        const endAngle = startAngle + arcSize;
-        const midAngle = startAngle + arcSize / 2;
+    for (let k = startIdx; k <= startIdx + visibleCount; k++) {
+        const slotIndex = ((k % totalSlots) + totalSlots) % totalSlots;
+        const slot = activeSlots[slotIndex];
+        const itemCenterX = cx + (k * STEP - normalizedScroll);
 
-        wCtx.save();
-        wCtx.beginPath();
-        wCtx.moveTo(cx, cy);
-        wCtx.arc(cx, cy, outerRadius, startAngle, endAngle);
-        wCtx.closePath();
+        if (itemCenterX < -CARD_WIDTH || itemCenterX > width + CARD_WIDTH) continue;
+
+        const distFromCenter = Math.abs(itemCenterX - cx);
+        const isCloseToCenter = distFromCenter < STEP / 2;
+
+        sCtx.save();
+        sCtx.translate(itemCenterX, cy);
+
+        const cardW = CARD_WIDTH;
+        const cardH = 92;
+        const cardRadius = 10;
 
         if (slot.type === 'number') {
-            const numIndex = (slot.value - 1) % NEON_COLORS.length;
-            wCtx.fillStyle = NEON_COLORS[numIndex].fill.replace('0.4', '0.85');
-            wCtx.strokeStyle = NEON_COLORS[numIndex].glow;
+            const colorObj = NEON_COLORS[(slot.value - 1) % NEON_COLORS.length];
+
+            sCtx.fillStyle = isCloseToCenter ? 'rgba(18, 22, 50, 0.95)' : 'rgba(12, 15, 36, 0.85)';
+            sCtx.strokeStyle = isCloseToCenter ? colorObj.glow : colorObj.fill.replace('0.4', '0.7');
+            sCtx.lineWidth = isCloseToCenter ? 2.5 : 1.2;
+            if (isCloseToCenter) {
+                sCtx.shadowColor = colorObj.glow;
+                sCtx.shadowBlur = 14;
+            }
+
+            sCtx.beginPath();
+            if (sCtx.roundRect) {
+                sCtx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, cardRadius);
+            } else {
+                sCtx.rect(-cardW / 2, -cardH / 2, cardW, cardH);
+            }
+            sCtx.fill();
+            sCtx.stroke();
+
+            sCtx.shadowBlur = 0;
+            sCtx.textAlign = 'center';
+            sCtx.textBaseline = 'middle';
+
+            sCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            sCtx.font = '600 10px "Orbitron", sans-serif';
+            sCtx.fillText('TILE', 0, -26);
+
+            sCtx.fillStyle = '#ffffff';
+            sCtx.font = 'bold 22px "Orbitron", sans-serif';
+            sCtx.shadowColor = colorObj.glow;
+            sCtx.shadowBlur = 6;
+            sCtx.fillText(`#${slot.value}`, 0, -2);
+
+            sCtx.shadowBlur = 0;
+            sCtx.font = '16px "Orbitron", sans-serif';
+            sCtx.fillText(TILE_ICONS[(slot.value - 1) % TILE_ICONS.length] || '⭐', 0, 24);
         } else {
-            wCtx.fillStyle = 'rgba(15, 18, 42, 0.95)';
-            wCtx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
+            sCtx.fillStyle = isCloseToCenter ? 'rgba(32, 10, 24, 0.95)' : 'rgba(18, 8, 18, 0.85)';
+            sCtx.strokeStyle = isCloseToCenter ? '#ff007f' : 'rgba(255, 0, 127, 0.45)';
+            sCtx.lineWidth = isCloseToCenter ? 2.5 : 1.2;
+            if (isCloseToCenter) {
+                sCtx.shadowColor = '#ff007f';
+                sCtx.shadowBlur = 14;
+            }
+
+            sCtx.beginPath();
+            if (sCtx.roundRect) {
+                sCtx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, cardRadius);
+            } else {
+                sCtx.rect(-cardW / 2, -cardH / 2, cardW, cardH);
+            }
+            sCtx.fill();
+            sCtx.stroke();
+
+            sCtx.shadowBlur = 0;
+            sCtx.textAlign = 'center';
+            sCtx.textBaseline = 'middle';
+
+            sCtx.fillStyle = 'rgba(255, 0, 127, 0.6)';
+            sCtx.font = '600 10px "Orbitron", sans-serif';
+            sCtx.fillText('NO TILE', 0, -24);
+
+            sCtx.fillStyle = '#ff007f';
+            sCtx.font = 'bold 18px "Orbitron", sans-serif';
+            sCtx.shadowColor = '#ff007f';
+            sCtx.shadowBlur = 8;
+            sCtx.fillText('MISS', 0, -2);
+
+            sCtx.shadowBlur = 0;
+            sCtx.font = '18px "Orbitron", sans-serif';
+            sCtx.fillText('❌', 0, 24);
         }
-        wCtx.fill();
-        wCtx.lineWidth = 1;
-        wCtx.stroke();
 
-        // Draw Labels
-        wCtx.translate(cx, cy);
-        wCtx.rotate(midAngle);
-        wCtx.textAlign = 'right';
-        wCtx.textBaseline = 'middle';
-
-        if (slot.type === 'number') {
-            wCtx.fillStyle = '#ffffff';
-            wCtx.font = 'bold 12px "Orbitron", sans-serif';
-            wCtx.shadowColor = '#000';
-            wCtx.shadowBlur = 4;
-            wCtx.fillText(slot.label, outerRadius - 12, 0);
-        } else {
-            wCtx.fillStyle = '#ff007f';
-            wCtx.font = 'bold 9px "Orbitron", sans-serif';
-            wCtx.fillText('MISS ❌', outerRadius - 10, 0);
-        }
-
-        wCtx.restore();
+        sCtx.restore();
     }
 
-    // Center Hub
-    wCtx.save();
-    wCtx.fillStyle = '#0a0d24';
-    wCtx.strokeStyle = '#ffe600';
-    wCtx.lineWidth = 3;
-    wCtx.shadowColor = '#ffe600';
-    wCtx.shadowBlur = 12;
-    wCtx.beginPath();
-    wCtx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
-    wCtx.fill();
-    wCtx.stroke();
+    // Vignette / Shadow edges
+    const leftGrad = sCtx.createLinearGradient(0, 0, 60, 0);
+    leftGrad.addColorStop(0, 'rgba(6, 8, 24, 0.95)');
+    leftGrad.addColorStop(1, 'rgba(6, 8, 24, 0)');
+    sCtx.fillStyle = leftGrad;
+    sCtx.fillRect(0, 0, 60, height);
 
-    wCtx.fillStyle = '#ffe600';
-    wCtx.font = '900 11px "Orbitron", sans-serif';
-    wCtx.textAlign = 'center';
-    wCtx.textBaseline = 'middle';
-    wCtx.fillText('SPIN', cx, cy);
-    wCtx.restore();
+    const rightGrad = sCtx.createLinearGradient(width - 60, 0, width, 0);
+    rightGrad.addColorStop(0, 'rgba(6, 8, 24, 0)');
+    rightGrad.addColorStop(1, 'rgba(6, 8, 24, 0.95)');
+    sCtx.fillStyle = rightGrad;
+    sCtx.fillRect(width - 60, 0, 60, height);
 }
 
-function animateSpinWheel() {
+function animateHorizontalSpinner() {
     if (!isWheelSpinning) return;
 
     const activeSlots = getActiveWheelSlots();
@@ -603,28 +688,30 @@ function animateSpinWheel() {
         return;
     }
 
-    const arcSize = (Math.PI * 2) / totalSlots;
+    scrollX += scrollSpeed;
+    scrollSpeed *= 0.983;
 
-    wheelAngle += wheelSpeed;
-    wheelSpeed *= 0.984; // Smooth friction
-
-    // Tick SFX per segment pass
-    const normalizedAngle = (Math.PI * 2 - (wheelAngle % (Math.PI * 2))) % (Math.PI * 2);
-    const currentSegmentIdx = Math.floor(normalizedAngle / arcSize) % totalSlots;
-
+    // Tick SFX per card passing center
+    const currentSegmentIdx = Math.floor((scrollX + STEP / 2) / STEP);
     if (currentSegmentIdx !== lastSegmentTickIndex) {
         lastSegmentTickIndex = currentSegmentIdx;
-        playTone(700, 0.02);
+        playTone(650 + Math.min(300, scrollSpeed * 8), 0.02);
     }
 
-    drawSpinWheel();
+    drawHorizontalSpinner();
 
-    if (wheelSpeed <= 0.002) {
-        wheelSpeed = 0;
+    if (scrollSpeed <= 0.35) {
+        scrollX = Math.round(scrollX / STEP) * STEP;
+        scrollSpeed = 0;
         isWheelSpinning = false;
-        onSpinComplete(currentSegmentIdx);
+        drawHorizontalSpinner();
+
+        const trackLength = totalSlots * STEP;
+        const finalNormalized = ((scrollX % trackLength) + trackLength) % trackLength;
+        const landedIndex = Math.round(finalNormalized / STEP) % totalSlots;
+        onSpinComplete(landedIndex);
     } else {
-        wheelAnimId = requestAnimationFrame(animateSpinWheel);
+        wheelAnimId = requestAnimationFrame(animateHorizontalSpinner);
     }
 }
 
@@ -645,12 +732,12 @@ function startSpin() {
     }
 
     isWheelSpinning = true;
-    wheelSpeed = Math.random() * 0.35 + 0.45; // Initial rotational force
-    wheelStatus.innerText = "Wheel is spinning... 🌀";
+    scrollSpeed = Math.random() * 22 + 40; // Initial velocity
+    wheelStatus.innerText = "Reel is scrolling... 🎰";
     wheelStatus.className = "game-status";
 
     if (wheelAnimId) cancelAnimationFrame(wheelAnimId);
-    animateSpinWheel();
+    animateHorizontalSpinner();
 }
 
 function onSpinComplete(landedSegmentIdx) {
@@ -695,7 +782,7 @@ function onSpinComplete(landedSegmentIdx) {
 function openSpinWheelModal() {
     updatePlayerNameDisplay();
     spinWheelModal.classList.remove('hidden');
-    drawSpinWheel();
+    drawHorizontalSpinner();
 }
 
 function closeSpinWheelModal() {
@@ -706,46 +793,28 @@ function closeSpinWheelModal() {
 btnOpenSpinWheel.addEventListener('click', openSpinWheelModal);
 spinModalCloseBtn.addEventListener('click', closeSpinWheelModal);
 
-// Wheel Canvas click event to trigger spin by clicking anywhere on the wheel / center hub
-if (wheelCanvas) {
-    wheelCanvas.style.cursor = 'pointer';
-    wheelCanvas.addEventListener('click', () => {
+if (btnSpinReel) {
+    btnSpinReel.addEventListener('click', startSpin);
+}
+
+// Spinner Canvas click event to trigger spin by clicking anywhere on the reel
+if (spinnerCanvas) {
+    spinnerCanvas.style.cursor = 'pointer';
+    spinnerCanvas.addEventListener('click', () => {
         if (!isWheelSpinning) {
             startSpin();
         }
     });
 }
 
-
-// Game Type Definitions for Tiles 1..16
-const MINI_GAMES = [
-    { title: "Neon Chrome Dino", desc: "Press Space or Tap to jump over obstacles! Reach 1200 points to shatter the tile.", type: "dino" },
-    { title: "Star Catcher", desc: "Click and collect 15 Pink Stars in 10 seconds! ", type: "star_catcher" },
-    { title: "Reflex Clicker", desc: "Click 5 glowing targets correctly within 3.5 seconds!", type: "quick_click" },
-    { title: "Constellation Connect", desc: "Connect dots 1 to 8 in numerical order in 3.5s to form a heart!", type: "constellation" },
-    { title: "Magical Sound Piano", desc: "Listen to the note pattern and replicate it on the neon piano!", type: "piano" },
-    { title: "Magic Rhythm Tiles", desc: "Music plays! Tap 12 falling neon tiles before they hit the bottom.", type: "magic_tiles" },
-    { title: "Find the Star in the Jar", desc: "The star is put in a jar and shuffled. Pick the top-down jar containing the star!", type: "jar_shuffle" },
-    { title: "Catch the Fast Firefly", desc: "Catch the super fast glowing firefly by clicking it!", type: "fast_firefly" },
-    { title: "Tower Stacker", desc: "Stack sliding blocks up to height 10 cleanly!", type: "tower_stacker" },
-    { title: "Tower of Hanoi", desc: "Solve Tower of Hanoi: move all 3 disks from Peg A to Peg C!", type: "hanoi" },
-
-    // Cycles for Tiles 11-16
-    { title: "Magic Rhythm Tiles II", desc: "Tap 12 falling neon tiles cleanly!", type: "magic_tiles" },
-    { title: "Find the Star II", desc: "Pick the correct top-down jar containing the hidden star!", type: "jar_shuffle" },
-    { title: "Catch the Fast Firefly II", desc: "Tap the fast erratic firefly!", type: "fast_firefly" },
-    { title: "Tower Stacker II", desc: "Stack blocks up to height 10!", type: "tower_stacker" },
-    { title: "Tower of Hanoi II", desc: "Move all 3 disks to Peg C!", type: "hanoi" },
-    { title: "Grand Dino Challenge", desc: "Reach 1200 points to shatter the final tile!", type: "dino" }
-];
-
-const TILE_ICONS = ['🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩', '🎶', '💫', '⚡', '🏢', '🏛️', '👑'];
-
 function initGrid() {
-    totalTiles = 16;
+    totalTiles = TOTAL_TILES;
     brokenCount = 0;
     if (winBanner) winBanner.classList.add('hidden');
+    if (!tileGrid) return;
     tileGrid.innerHTML = '';
+    tileGrid.style.setProperty('--grid-cols', GRID_COLS);
+    tileGrid.style.setProperty('--grid-rows', GRID_ROWS);
 
     for (let i = 0; i < totalTiles; i++) {
         const tile = document.createElement('div');
@@ -760,12 +829,8 @@ function initGrid() {
         icon.className = 'tile-icon';
         icon.innerText = TILE_ICONS[i % TILE_ICONS.length];
 
-        const label = document.createElement('span');
-        label.innerText = `TILE ${i + 1}`;
-
         tile.appendChild(num);
         tile.appendChild(icon);
-        tile.appendChild(label);
 
         tile.addEventListener('click', () => {
             const tileKey = `tile_${i}`;
@@ -778,11 +843,11 @@ function initGrid() {
                 return;
             }
 
-            // Tile can only be played if selected via Spin Wheel
+            // Tile can only be played if selected via Horizontal Spinner
             if (unlockedTileIndex === i) {
                 openMiniGameModal(i, tile);
             } else {
-                wheelStatus.innerText = `🔒 TILE #${i + 1} IS LOCKED! SPIN THE WHEEL TO SELECT!`;
+                wheelStatus.innerText = `🔒 TILE #${i + 1} IS LOCKED! SPIN TO SELECT!`;
                 wheelStatus.className = "game-status lose";
                 openSpinWheelModal();
             }
@@ -804,7 +869,7 @@ function handleRealtimeUpdate(tilesData) {
 
     // Check for newly cracked tiles to show live side toasts
     if (previousTilesData) {
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < TOTAL_TILES; i++) {
             const key = `tile_${i}`;
             const prev = previousTilesData[key];
             const curr = tilesData[key];
@@ -835,7 +900,7 @@ function handleRealtimeUpdate(tilesData) {
 
     brokenCount = currentBroken;
     updateStats();
-    drawSpinWheel();
+    drawHorizontalSpinner();
 
     if (brokenCount >= totalTiles) {
         triggerVictory();
@@ -932,7 +997,7 @@ function triggerVictory() {
 function openMiniGameModal(tileIndex, tileElement) {
     activeTileElement = tileElement;
     activeTileIndex = tileIndex;
-    const config = MINI_GAMES[tileIndex % MINI_GAMES.length];
+    const config = getGameConfigForTile(tileIndex);
 
     modalTileBadge.innerText = `TILE ${tileIndex + 1}`;
     modalGameTitle.innerText = config.title;
@@ -948,32 +1013,22 @@ function openMiniGameModal(tileIndex, tileElement) {
     mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
     mgCtx.fillStyle = '#0a0a16';
     mgCtx.fillRect(0, 0, minigameCanvas.width, minigameCanvas.height);
-    mgCtx.fillStyle = '#00f3ff';
-    mgCtx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
-    mgCtx.textAlign = 'center';
-    mgCtx.fillText(config.title, minigameCanvas.width / 2, minigameCanvas.height / 2 - 10);
-    mgCtx.fillStyle = '#b537f2';
-    mgCtx.font = '13px "Plus Jakarta Sans", sans-serif';
-    mgCtx.fillText("Click 'Start Challenge' below when ready", minigameCanvas.width / 2, minigameCanvas.height / 2 + 20);
-
+    
     minigameModal.classList.remove('hidden');
 }
 
 function closeMiniGameModal() {
+    minigameModal.classList.add('hidden');
     if (currentGameLoop) {
         cancelAnimationFrame(currentGameLoop);
         currentGameLoop = null;
     }
-    // Revoke unlocked tile access if player closes modal without winning
-    unlockedTileIndex = null;
-    minigameModal.classList.add('hidden');
+    clearCanvasInteraction(minigameCanvas);
 }
 
-function showAlreadyCompletedModal(tileNumber, solverName) {
-    closeMiniGameModal(); // Ensure game canvas/modal is completely hidden
-    completedTileBadge.innerText = `TILE #${tileNumber}`;
-    const nameStr = solverName ? solverName : "A player";
-    completedMessage.innerHTML = `<strong style="color: var(--neon-pink); font-size: 1.1rem;">${nameStr}</strong> has already cracked the tile.`;
+function showAlreadyCompletedModal(tileNum, solverName) {
+    completedTileBadge.innerText = `TILE #${tileNum}`;
+    completedMessage.innerHTML = `This tile has already been unlocked by <strong>${solverName}</strong>! 🎉<br>Spin the reel to select an unsolved tile.`;
     completedModal.classList.remove('hidden');
 
     // Auto disappear after 5 seconds
@@ -1004,7 +1059,7 @@ btnStartGame.addEventListener('click', () => {
     btnStartGame.classList.add('hidden');
     btnStartGame.style.display = 'none';
     if (activeTileIndex >= 0) {
-        const config = MINI_GAMES[activeTileIndex % MINI_GAMES.length];
+        const config = getGameConfigForTile(activeTileIndex);
         minigameStatus.innerText = "Game in progress...";
         startMiniGame(config.type);
     }
@@ -1038,7 +1093,7 @@ function onMiniGameLose(reason = "Game Over!") {
     }
     // Must spin again if failed!
     unlockedTileIndex = null;
-    minigameStatus.innerText = "OOPS... NICE TRY!! SPIN THE WHEEL AGAIN TO RETRY!";
+    minigameStatus.innerText = "OOPS... NICE TRY!! SPIN THE REEL AGAIN TO RETRY!";
     minigameStatus.className = "game-status lose";
     btnStartGame.classList.add('hidden');
 }

@@ -109,3 +109,84 @@ function resetFirebaseTiles() {
         }
     }
 }
+
+/**
+ * Checks if a player name is already taken in Firebase or LocalStorage
+ */
+function checkIfPlayerNameTaken(name, callback) {
+    const cleanName = name.trim().toLowerCase();
+    if (!cleanName) {
+        callback(false);
+        return;
+    }
+
+    const key = cleanName.replace(/[.#$/[\]]/g, "_");
+
+    const localTiles = JSON.parse(localStorage.getItem('neon_magic_tiles')) || {};
+    const localPlayers = JSON.parse(localStorage.getItem('neon_registered_players')) || [];
+
+    let isTakenLocally = localPlayers.some(p => p.toLowerCase() === cleanName);
+    for (let tileKey in localTiles) {
+        if (localTiles[tileKey] && localTiles[tileKey].solverName && localTiles[tileKey].solverName.trim().toLowerCase() === cleanName) {
+            isTakenLocally = true;
+            break;
+        }
+    }
+
+    if (!isFirebaseActive || !db) {
+        callback(isTakenLocally);
+        return;
+    }
+
+    db.ref(`players/${key}`).once('value')
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                callback(true);
+            } else {
+                db.ref('tiles').once('value').then((tileSnap) => {
+                    const tiles = tileSnap.val() || {};
+                    let takenInTiles = false;
+                    for (let tKey in tiles) {
+                        if (tiles[tKey] && tiles[tKey].solverName && tiles[tKey].solverName.trim().toLowerCase() === cleanName) {
+                            takenInTiles = true;
+                            break;
+                        }
+                    }
+                    callback(isTakenLocally || takenInTiles);
+                }).catch(() => {
+                    callback(isTakenLocally);
+                });
+            }
+        })
+        .catch((err) => {
+            console.error("Firebase player check error:", err);
+            callback(isTakenLocally);
+        });
+}
+
+/**
+ * Registers a new player name in Firebase and LocalStorage
+ */
+function registerPlayerNameInFirebase(name) {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+
+    const lowerName = cleanName.toLowerCase();
+    const key = lowerName.replace(/[.#$/[\]]/g, "_");
+
+    const localPlayers = JSON.parse(localStorage.getItem('neon_registered_players')) || [];
+    if (!localPlayers.some(p => p.toLowerCase() === lowerName)) {
+        localPlayers.push(cleanName);
+        localStorage.setItem('neon_registered_players', JSON.stringify(localPlayers));
+    }
+
+    if (isFirebaseActive && db) {
+        db.ref(`players/${key}`).set({
+            name: cleanName,
+            registeredAt: Date.now()
+        }).catch((err) => {
+            console.error("Error registering player in Firebase:", err);
+        });
+    }
+}
+

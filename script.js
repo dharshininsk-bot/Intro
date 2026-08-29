@@ -338,6 +338,7 @@ const initialPlayerNameInput = document.getElementById('initialPlayerNameInput')
 const btnSaveInitialPlayerName = document.getElementById('btnSaveInitialPlayerName');
 const spinPlayerNameDisplay = document.getElementById('spinPlayerNameDisplay');
 const btnEditPlayerName = document.getElementById('btnEditPlayerName');
+const playerNameError = document.getElementById('playerNameError');
 
 // Name Prompt Modal Elements
 const namePromptModal = document.getElementById('namePromptModal');
@@ -368,35 +369,69 @@ let savedPlayerName = localStorage.getItem('neon_player_name') || '';
 
 function updatePlayerNameDisplay() {
     if (spinPlayerNameDisplay) {
-        spinPlayerNameDisplay.innerText = savedPlayerName.trim() ? savedPlayerName : 'Hunter';
+        spinPlayerNameDisplay.innerText = savedPlayerName.trim() ? savedPlayerName : 'Not Set';
+    }
+    if (btnEditPlayerName) {
+        btnEditPlayerName.style.display = 'none'; // Name cannot be changed after saving
     }
 }
 
 function promptForPlayerName(onSuccessCallback) {
-    initialPlayerNameInput.value = savedPlayerName;
+    if (savedPlayerName.trim()) {
+        updatePlayerNameDisplay();
+        if (onSuccessCallback) onSuccessCallback();
+        return;
+    }
+
+    if (playerNameError) {
+        playerNameError.innerText = '';
+        playerNameError.classList.add('hidden');
+    }
+    initialPlayerNameInput.value = '';
     playerNameModal.classList.remove('hidden');
     setTimeout(() => initialPlayerNameInput.focus(), 200);
 
     const handleSave = () => {
         const val = initialPlayerNameInput.value.trim();
-        savedPlayerName = val || 'Hunter';
-        localStorage.setItem('neon_player_name', savedPlayerName);
-        updatePlayerNameDisplay();
-        playerNameModal.classList.add('hidden');
-        btnSaveInitialPlayerName.removeEventListener('click', handleSave);
-        if (onSuccessCallback) onSuccessCallback();
+        if (!val) {
+            if (playerNameError) {
+                playerNameError.innerText = "❌ Please enter a valid name!";
+                playerNameError.classList.remove('hidden');
+            }
+            return;
+        }
+
+        btnSaveInitialPlayerName.disabled = true;
+        btnSaveInitialPlayerName.innerText = "Checking... ⏳";
+
+        checkIfPlayerNameTaken(val, (isTaken) => {
+            btnSaveInitialPlayerName.disabled = false;
+            btnSaveInitialPlayerName.innerText = "Save & Spin 🚀";
+
+            if (isTaken) {
+                if (playerNameError) {
+                    playerNameError.innerText = `❌ Name "${val}" is already taken! Please enter a different name.`;
+                    playerNameError.classList.remove('hidden');
+                }
+                initialPlayerNameInput.focus();
+                initialPlayerNameInput.select();
+            } else {
+                savedPlayerName = val;
+                localStorage.setItem('neon_player_name', savedPlayerName);
+                if (typeof registerPlayerNameInFirebase === 'function') {
+                    registerPlayerNameInFirebase(savedPlayerName);
+                }
+                updatePlayerNameDisplay();
+                playerNameModal.classList.add('hidden');
+                if (onSuccessCallback) onSuccessCallback();
+            }
+        });
     };
 
     btnSaveInitialPlayerName.onclick = handleSave;
     initialPlayerNameInput.onkeydown = (e) => {
         if (e.key === 'Enter') handleSave();
     };
-}
-
-if (btnEditPlayerName) {
-    btnEditPlayerName.addEventListener('click', () => {
-        promptForPlayerName();
-    });
 }
 
 function showSideToast(message) {
@@ -418,15 +453,24 @@ function showSideToast(message) {
 }
 
 // ==========================================
-// 3.1 SPIN WHEEL ENGINE (32 SEGMENTS: 16 NUMBERS + 16 MISSES)
+// 3.1 SPIN WHEEL ENGINE (DYNAMIC: REMOVES BROKEN TILES & MATCHING MISSES)
 // ==========================================
-const WHEEL_SLOTS = [];
-for (let i = 1; i <= 16; i++) {
-    WHEEL_SLOTS.push({ type: 'number', value: i, label: `${i}` });
-    WHEEL_SLOTS.push({ type: 'miss', value: null, label: 'MISS' });
+function getActiveWheelSlots() {
+    const activeSlots = [];
+    for (let i = 1; i <= 16; i++) {
+        const tileIdx = i - 1;
+        const tileKey = `tile_${tileIdx}`;
+        const tileInfo = allTilesStateData[tileKey];
+        const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
+        const isBroken = (tileInfo && tileInfo.broken) || (targetTile && targetTile.classList.contains('broken'));
+
+        if (!isBroken) {
+            activeSlots.push({ type: 'number', value: i, label: `${i}` });
+            activeSlots.push({ type: 'miss', value: null, label: 'MISS' });
+        }
+    }
+    return activeSlots;
 }
-const TOTAL_SLOTS = WHEEL_SLOTS.length; // 32
-const ARC_SIZE = (Math.PI * 2) / TOTAL_SLOTS;
 
 let isWheelSpinning = false;
 let wheelAngle = 0;
@@ -445,6 +489,32 @@ function drawSpinWheel() {
 
     wCtx.clearRect(0, 0, width, height);
 
+    const activeSlots = getActiveWheelSlots();
+    const totalSlots = activeSlots.length;
+
+    if (totalSlots === 0) {
+        wCtx.save();
+        wCtx.fillStyle = '#0a0d24';
+        wCtx.strokeStyle = '#ffe600';
+        wCtx.lineWidth = 3;
+        wCtx.shadowColor = '#ffe600';
+        wCtx.shadowBlur = 12;
+        wCtx.beginPath();
+        wCtx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+        wCtx.fill();
+        wCtx.stroke();
+
+        wCtx.fillStyle = '#ffe600';
+        wCtx.font = 'bold 16px "Orbitron", sans-serif';
+        wCtx.textAlign = 'center';
+        wCtx.textBaseline = 'middle';
+        wCtx.fillText('ALL CLEARED! 🏆', cx, cy);
+        wCtx.restore();
+        return;
+    }
+
+    const arcSize = (Math.PI * 2) / totalSlots;
+
     // Outer Glow Ring
     wCtx.save();
     wCtx.shadowColor = '#00f3ff';
@@ -456,12 +526,12 @@ function drawSpinWheel() {
     wCtx.stroke();
     wCtx.restore();
 
-    // Render 32 Slices
-    for (let i = 0; i < TOTAL_SLOTS; i++) {
-        const slot = WHEEL_SLOTS[i];
-        const startAngle = wheelAngle + i * ARC_SIZE - Math.PI / 2;
-        const endAngle = startAngle + ARC_SIZE;
-        const midAngle = startAngle + ARC_SIZE / 2;
+    // Render Slices
+    for (let i = 0; i < totalSlots; i++) {
+        const slot = activeSlots[i];
+        const startAngle = wheelAngle + i * arcSize - Math.PI / 2;
+        const endAngle = startAngle + arcSize;
+        const midAngle = startAngle + arcSize / 2;
 
         wCtx.save();
         wCtx.beginPath();
@@ -525,12 +595,22 @@ function drawSpinWheel() {
 function animateSpinWheel() {
     if (!isWheelSpinning) return;
 
+    const activeSlots = getActiveWheelSlots();
+    const totalSlots = activeSlots.length;
+
+    if (totalSlots === 0) {
+        isWheelSpinning = false;
+        return;
+    }
+
+    const arcSize = (Math.PI * 2) / totalSlots;
+
     wheelAngle += wheelSpeed;
     wheelSpeed *= 0.984; // Smooth friction
 
     // Tick SFX per segment pass
     const normalizedAngle = (Math.PI * 2 - (wheelAngle % (Math.PI * 2))) % (Math.PI * 2);
-    const currentSegmentIdx = Math.floor(normalizedAngle / ARC_SIZE) % TOTAL_SLOTS;
+    const currentSegmentIdx = Math.floor(normalizedAngle / arcSize) % totalSlots;
 
     if (currentSegmentIdx !== lastSegmentTickIndex) {
         lastSegmentTickIndex = currentSegmentIdx;
@@ -551,6 +631,13 @@ function animateSpinWheel() {
 function startSpin() {
     if (isWheelSpinning) return;
 
+    const activeSlots = getActiveWheelSlots();
+    if (activeSlots.length === 0) {
+        wheelStatus.innerText = "🎉 ALL TILES HAVE BEEN BROKEN!";
+        wheelStatus.className = "game-status win";
+        return;
+    }
+
     // Check if player name is saved before spinning!
     if (!savedPlayerName.trim()) {
         promptForPlayerName(() => startSpin());
@@ -569,7 +656,10 @@ function startSpin() {
 }
 
 function onSpinComplete(landedSegmentIdx) {
-    const slot = WHEEL_SLOTS[landedSegmentIdx];
+    const activeSlots = getActiveWheelSlots();
+    if (activeSlots.length === 0) return;
+    const slot = activeSlots[landedSegmentIdx];
+    if (!slot) return;
 
     if (slot.type === 'miss') {
         unlockedTileIndex = null;
@@ -746,6 +836,7 @@ function handleRealtimeUpdate(tilesData) {
 
     brokenCount = currentBroken;
     updateStats();
+    drawSpinWheel();
 
     if (brokenCount >= totalTiles) {
         triggerVictory();
@@ -789,6 +880,7 @@ function onClick(tileElement, solverName = "A Player") {
         tileElement.classList.add('broken');
         
         updateStats();
+        drawSpinWheel();
 
         if (brokenCount >= totalTiles) {
             triggerVictory();

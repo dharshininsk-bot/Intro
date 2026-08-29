@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <!-- Fullscreen Canvas for Neon Butterflies -->
     <canvas id="butterflyCanvas"></canvas>
@@ -22,7 +26,7 @@
         <header class="header" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="title-badge">NEON HALL OF FAME</div>
-                <a href="index.html" class="btn btn-sm btn-primary" style="text-decoration: none;">🎮 PLAY GAME</a>
+                <a href="index.html" class="btn btn-sm btn-primary" style="text-decoration: none;">BACK</a>
             </div>
             <h1 class="title">LEADERBOARD & STATS</h1>
             <p class="subtitle">Real-time rankings of top emblem hunters & tile status</p>
@@ -54,7 +58,8 @@
         <main class="leaderboard-card">
             <div class="chart-header">
                 <h2 class="chart-title">🏆 TOP EMBLEM HUNTERS</h2>
-                <span style="font-size: 0.75rem; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif;">LIVE RANKINGS</span>
+                <span style="font-size: 0.75rem; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif;">LIVE
+                    RANKINGS</span>
             </div>
 
             <div id="leaderboardChart" class="leaderboard-chart">
@@ -63,16 +68,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Live Tile Grid Overview Card -->
-        <section class="leaderboard-card">
-            <div class="chart-header">
-                <h2 class="chart-title">🗺️ TILE GRID STATUS</h2>
-                <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">4 × 4 OVERVIEW</span>
-            </div>
-
-            <div id="lbTileGrid" class="tile-grid" style="position: relative; height: 260px; pointer-events: none;"></div>
-        </section>
     </div>
 
     <!-- Firebase SDKs -->
@@ -165,7 +160,7 @@
                 gain.connect(audioCtx.destination);
                 osc.start(now);
                 osc.stop(now + 0.25);
-            } catch(e){}
+            } catch (e) { }
         }
 
         // Side Toast Notifications
@@ -323,4 +318,5 @@
         });
     </script>
 </body>
+
 </html>

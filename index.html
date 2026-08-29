@@ -42,20 +42,6 @@
 
                 <!-- Overlay Tile Grid (4x4) -->
                 <div id="tileGrid" class="tile-grid"></div>
-
-                <!-- Win Overlay -->
-                <div id="winBanner" class="win-banner hidden">
-                    <div class="win-content">
-                        <span class="win-icon">✨</span>
-                        <h2 class="win-title">ALL TILES UNLOCKED!</h2>
-                        <p class="win-text">The magic emblem has been fully unveiled</p>
-                        <div style="display: flex; gap: 10px; justify-content: center;">
-                            <button id="btnRehide" class="btn btn-sm btn-primary">Play Again 🔄</button>
-                            <a href="leaderboard.html" class="btn btn-sm btn-primary"
-                                style="text-decoration: none;">Leaderboard 🏆</a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -71,8 +57,8 @@
                     <span id="progressText" class="stat-value">0%</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">GRID</span>
-                    <span class="stat-value">4 × 4</span>
+                    <span class="stat-label">TILES BROKEN</span>
+                    <span id="tilesBroken" class="stat-value">0</span>
                 </div>
             </div>
 
@@ -82,14 +68,15 @@
             </div>
 
             <!-- Spin Wheel Trigger Button & Leaderboard Link -->
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
+            <div id="actionBtnContainer"
+                style="display: flex; gap: 8px; margin-top: 4px; justify-content: center; width: 100%;">
                 <button id="btnOpenSpinWheel" class="btn btn-primary"
                     style="flex: 2; font-size: 0.82rem; padding: 12px;">
                     🎡 SPIN WHEEL TO SELECT TILE
                 </button>
-                <a href="leaderboard.html" class="btn btn-primary"
+                <a id="btnRankings" href="leaderboard.html" class="btn btn-primary"
                     style="flex: 1; text-decoration: none; font-size: 0.82rem; padding: 12px; text-align: center;">
-                    🏆 RANKINGS
+                    🏆 LEADERBOARD
                 </a>
             </div>
         </section>
@@ -117,11 +104,7 @@
             </div>
 
             <div class="modal-footer">
-                <div id="wheelStatus" class="game-status">Ready to spin!</div>
-                <div class="wheel-btn-group" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
-                    <button id="btnSpinWheel" class="btn btn-primary btn-sm">SPIN NOW 🎡</button>
-                    <button id="btnPlayUnlockedTile" class="btn btn-primary btn-sm hidden">PLAY CHALLENGE 🚀</button>
-                </div>
+                <div id="wheelStatus" class="game-status">Click center hub SPIN to spin! 🎡</div>
             </div>
         </div>
     </div>
@@ -132,12 +115,14 @@
             <div class="modal-header">
                 <span class="modal-badge">WELCOME HUNTER</span>
                 <h2 class="modal-title">ENTER YOUR NAME 🎮</h2>
-                <p class="modal-desc">Enter your In-Game Name once. This name is saved permanently and cannot be changed later!</p>
+                <p class="modal-desc">Enter your In-Game Name once. This name is saved permanently and cannot be changed
+                    later!</p>
             </div>
             <div class="modal-body" style="padding: 15px 0;">
                 <input type="text" id="initialPlayerNameInput" placeholder="Enter your name..."
                     style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--neon-cyan); background: rgba(10, 10, 22, 0.9); color: #fff; font-size: 1rem; outline: none; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);" />
-                <div id="playerNameError" class="game-status lose hidden" style="margin-top: 10px; font-size: 0.85rem; padding: 8px 12px; border-radius: 6px;"></div>
+                <div id="playerNameError" class="game-status lose hidden"
+                    style="margin-top: 10px; font-size: 0.85rem; padding: 8px 12px; border-radius: 6px;"></div>
             </div>
             <div class="modal-footer">
                 <button id="btnSaveInitialPlayerName" class="btn btn-primary btn-sm">Save & Spin 🚀</button>

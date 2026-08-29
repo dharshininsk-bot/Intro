@@ -88,7 +88,7 @@ class TileShard {
         ctx.fillStyle = this.color;
         ctx.shadowColor = this.color;
         ctx.shadowBlur = 10;
-        
+
         ctx.beginPath();
         ctx.moveTo(-this.size / 2, -this.size / 2);
         ctx.lineTo(this.size / 2, -this.size / 4);
@@ -111,11 +111,11 @@ class NeonButterfly {
         this.y = Math.random() * height;
         this.size = Math.random() * 12 + 10;
         this.speed = Math.random() * 1.5 + 1;
-        
+
         const targetX = Math.random() * width;
         const targetY = Math.random() * height;
         const angle = Math.atan2(targetY - this.y, targetX - this.x);
-        
+
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
         this.wingAngle = Math.random() * Math.PI;
@@ -267,7 +267,7 @@ function playShatterSound() {
 
         osc.start(now);
         osc.stop(now + 0.25);
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function playTone(freq, duration = 0.2) {
@@ -288,7 +288,7 @@ function playTone(freq, duration = 0.2) {
 
         osc.start(now);
         osc.stop(now + duration);
-    } catch (e) {}
+    } catch (e) { }
 }
 
 function playSuccessFanfare() {
@@ -297,7 +297,7 @@ function playSuccessFanfare() {
         notes.forEach((freq, idx) => {
             setTimeout(() => playTone(freq, 0.25), idx * 80);
         });
-    } catch (e) {}
+    } catch (e) { }
 }
 
 
@@ -306,6 +306,7 @@ function playSuccessFanfare() {
 // ==========================================
 const tileGrid = document.getElementById('tileGrid');
 const tilesLeftEl = document.getElementById('tilesLeft');
+const tilesBrokenEl = document.getElementById('tilesBroken');
 const progressTextEl = document.getElementById('progressText');
 const progressBarEl = document.getElementById('progressBar');
 const winBanner = document.getElementById('winBanner');
@@ -326,11 +327,10 @@ const btnStartGame = document.getElementById('btnStartGame');
 const spinWheelModal = document.getElementById('spinWheelModal');
 const spinModalCloseBtn = document.getElementById('spinModalCloseBtn');
 const btnOpenSpinWheel = document.getElementById('btnOpenSpinWheel');
+const btnRankings = document.getElementById('btnRankings');
 const wheelCanvas = document.getElementById('wheelCanvas');
 const wCtx = wheelCanvas.getContext('2d');
 const wheelStatus = document.getElementById('wheelStatus');
-const btnSpinWheel = document.getElementById('btnSpinWheel');
-const btnPlayUnlockedTile = document.getElementById('btnPlayUnlockedTile');
 
 // Player Name Modal & Storage
 const playerNameModal = document.getElementById('playerNameModal');
@@ -648,8 +648,6 @@ function startSpin() {
     wheelSpeed = Math.random() * 0.35 + 0.45; // Initial rotational force
     wheelStatus.innerText = "Wheel is spinning... 🌀";
     wheelStatus.className = "game-status";
-    btnSpinWheel.classList.add('hidden');
-    btnPlayUnlockedTile.classList.add('hidden');
 
     if (wheelAnimId) cancelAnimationFrame(wheelAnimId);
     animateSpinWheel();
@@ -663,11 +661,9 @@ function onSpinComplete(landedSegmentIdx) {
 
     if (slot.type === 'miss') {
         unlockedTileIndex = null;
-        wheelStatus.innerText = "❌ MISS! No tile selected. Spin again!";
+        wheelStatus.innerText = "❌ MISS! No tile selected. Click SPIN to try again!";
         wheelStatus.className = "game-status lose";
         playTone(200, 0.25);
-        btnSpinWheel.innerText = "SPIN AGAIN 🎡";
-        btnSpinWheel.classList.remove('hidden');
     } else {
         const tileNum = slot.value;
         const tileIdx = tileNum - 1;
@@ -679,17 +675,19 @@ function onSpinComplete(landedSegmentIdx) {
         if (isBroken) {
             unlockedTileIndex = null;
             const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
-            wheelStatus.innerText = `Tile #${tileNum} is already cracked by ${solver}! Spin again!`;
+            wheelStatus.innerText = `Tile #${tileNum} is already cracked by ${solver}! Click SPIN to try again!`;
             wheelStatus.className = "game-status";
-            btnSpinWheel.innerText = "SPIN AGAIN 🎡";
-            btnSpinWheel.classList.remove('hidden');
         } else {
             unlockedTileIndex = tileIdx;
-            wheelStatus.innerText = `✨ TILE #${tileNum} UNLOCKED! ✨`;
+            wheelStatus.innerText = `✨ TILE #${tileNum} UNLOCKED! LAUNCHING CHALLENGE... 🚀`;
             wheelStatus.className = "game-status win";
             playSuccessFanfare();
-            btnPlayUnlockedTile.innerText = `PLAY TILE #${tileNum} 🚀`;
-            btnPlayUnlockedTile.classList.remove('hidden');
+
+            // Automatically open mini game modal after brief pause
+            setTimeout(() => {
+                closeSpinWheelModal();
+                openMiniGameModal(tileIdx, targetTile);
+            }, 700);
         }
     }
 }
@@ -705,17 +703,18 @@ function closeSpinWheelModal() {
     spinWheelModal.classList.add('hidden');
 }
 
-btnSpinWheel.addEventListener('click', startSpin);
 btnOpenSpinWheel.addEventListener('click', openSpinWheelModal);
 spinModalCloseBtn.addEventListener('click', closeSpinWheelModal);
 
-btnPlayUnlockedTile.addEventListener('click', () => {
-    if (unlockedTileIndex !== null) {
-        const targetTile = document.querySelector(`.tile[data-index="${unlockedTileIndex}"]`);
-        closeSpinWheelModal();
-        openMiniGameModal(unlockedTileIndex, targetTile);
-    }
-});
+// Wheel Canvas click event to trigger spin by clicking anywhere on the wheel / center hub
+if (wheelCanvas) {
+    wheelCanvas.style.cursor = 'pointer';
+    wheelCanvas.addEventListener('click', () => {
+        if (!isWheelSpinning) {
+            startSpin();
+        }
+    });
+}
 
 
 // Game Type Definitions for Tiles 1..16
@@ -730,7 +729,7 @@ const MINI_GAMES = [
     { title: "Catch the Fast Firefly", desc: "Catch the super fast glowing firefly by clicking it!", type: "fast_firefly" },
     { title: "Tower Stacker", desc: "Stack sliding blocks up to height 10 cleanly!", type: "tower_stacker" },
     { title: "Tower of Hanoi", desc: "Solve Tower of Hanoi: move all 3 disks from Peg A to Peg C!", type: "hanoi" },
-    
+
     // Cycles for Tiles 11-16
     { title: "Magic Rhythm Tiles II", desc: "Tap 12 falling neon tiles cleanly!", type: "magic_tiles" },
     { title: "Find the Star II", desc: "Pick the correct top-down jar containing the hidden star!", type: "jar_shuffle" },
@@ -745,7 +744,7 @@ const TILE_ICONS = ['🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲',
 function initGrid() {
     totalTiles = 16;
     brokenCount = 0;
-    winBanner.classList.add('hidden');
+    if (winBanner) winBanner.classList.add('hidden');
     tileGrid.innerHTML = '';
 
     for (let i = 0; i < totalTiles; i++) {
@@ -878,7 +877,7 @@ function onClick(tileElement, solverName = "A Player") {
     setTimeout(() => {
         tileElement.classList.remove('shattering');
         tileElement.classList.add('broken');
-        
+
         updateStats();
         drawSpinWheel();
 
@@ -891,15 +890,34 @@ function onClick(tileElement, solverName = "A Player") {
 function updateStats() {
     const remaining = totalTiles - brokenCount;
     tilesLeftEl.innerText = Math.max(0, remaining);
+    if (tilesBrokenEl) tilesBrokenEl.innerText = brokenCount;
 
     const progressPct = Math.min(100, Math.round((brokenCount / totalTiles) * 100));
     progressTextEl.innerText = progressPct + '%';
     progressBarEl.style.width = progressPct + '%';
+
+    if (brokenCount >= totalTiles) {
+        if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = 'none';
+        if (btnRankings) {
+            btnRankings.style.flex = 'none';
+            btnRankings.style.width = '100%';
+            btnRankings.style.maxWidth = '280px';
+            btnRankings.style.margin = '0 auto';
+        }
+    } else {
+        if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = '';
+        if (btnRankings) {
+            btnRankings.style.flex = '1';
+            btnRankings.style.width = 'auto';
+            btnRankings.style.maxWidth = 'none';
+            btnRankings.style.margin = '0';
+        }
+    }
 }
 
 function triggerVictory() {
     setTimeout(() => {
-        winBanner.classList.remove('hidden');
+        if (winBanner) winBanner.classList.remove('hidden');
         playSuccessFanfare();
         for (let i = 0; i < 8; i++) {
             butterflies.push(new NeonButterfly());
@@ -921,7 +939,7 @@ function openMiniGameModal(tileIndex, tileElement) {
     modalGameDesc.innerText = config.desc;
     minigameStatus.innerText = "Press 'Start Challenge' to begin!";
     minigameStatus.className = "game-status";
-    
+
     // Ensure start button is visible and active
     btnStartGame.classList.remove('hidden');
     btnStartGame.style.display = 'inline-block';
@@ -1072,10 +1090,5 @@ updatePlayerNameDisplay();
 listenToTileUpdates((tilesData) => {
     handleRealtimeUpdate(tilesData);
 });
-
-// Display Spin Wheel Modal on Link Open
-setTimeout(() => {
-    openSpinWheelModal();
-}, 300);
 
 

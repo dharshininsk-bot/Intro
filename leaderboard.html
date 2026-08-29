@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystical Logo Unveil - Live Leaderboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Fullscreen Canvas for Neon Butterflies -->
+    <canvas id="butterflyCanvas"></canvas>
+
+    <!-- Side Toast Notifications Container -->
+    <div id="sideToastContainer" class="side-toast-container"></div>
+
+    <div class="leaderboard-container">
+        <!-- Header -->
+        <header class="header" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="title-badge">NEON HALL OF FAME</div>
+                <a href="index.html" class="btn btn-sm btn-primary" style="text-decoration: none;">🎮 PLAY GAME</a>
+            </div>
+            <h1 class="title">LEADERBOARD & STATS</h1>
+            <p class="subtitle">Real-time rankings of top emblem hunters & tile status</p>
+        </header>
+
+        <!-- Stats Overview Row -->
+        <section class="controls-panel">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="stat-label">REMAINING TILES</span>
+                    <span id="remTilesCount" class="stat-value">16</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">TILES CRACKED</span>
+                    <span id="unlockedTilesCount" class="stat-value">0 / 16</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">ACTIVE HUNTERS</span>
+                    <span id="totalHuntersCount" class="stat-value">0</span>
+                </div>
+            </div>
+
+            <div class="progress-container" style="margin-top: 4px;">
+                <div id="lbProgressBar" class="progress-bar-fill"></div>
+            </div>
+        </section>
+
+        <!-- Dynamic Bar Chart Card -->
+        <main class="leaderboard-card">
+            <div class="chart-header">
+                <h2 class="chart-title">🏆 TOP EMBLEM HUNTERS</h2>
+                <span style="font-size: 0.75rem; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif;">LIVE RANKINGS</span>
+            </div>
+
+            <div id="leaderboardChart" class="leaderboard-chart">
+                <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 30px 0;">
+                    Loading realtime standings...
+                </div>
+            </div>
+        </main>
+
+        <!-- Live Tile Grid Overview Card -->
+        <section class="leaderboard-card">
+            <div class="chart-header">
+                <h2 class="chart-title">🗺️ TILE GRID STATUS</h2>
+                <span style="font-size: 0.75rem; color: rgba(255,255,255,0.6);">4 × 4 OVERVIEW</span>
+            </div>
+
+            <div id="lbTileGrid" class="tile-grid" style="position: relative; height: 260px; pointer-events: none;"></div>
+        </section>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // Canvas & Butterflies Animation
+        const canvas = document.getElementById('butterflyCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const NEON_COLORS = [
+            { fill: 'rgba(0, 243, 255, 0.4)', glow: '#00f3ff' },
+            { fill: 'rgba(255, 0, 127, 0.4)', glow: '#ff007f' },
+            { fill: 'rgba(181, 55, 242, 0.4)', glow: '#b537f2' }
+        ];
+
+        class NeonButterfly {
+            constructor() {
+                this.reset();
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+            }
+            reset() {
+                this.x = Math.random() < 0.5 ? -30 : width + 30;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 10 + 8;
+                this.speed = Math.random() * 1.2 + 0.8;
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * this.speed;
+                this.vy = Math.sin(angle) * this.speed;
+                this.wingAngle = Math.random() * Math.PI;
+                this.color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.wingAngle += 0.12;
+                if (this.x < -40 || this.x > width + 40 || this.y < -40 || this.y > height + 40) this.reset();
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                const wingScale = Math.sin(this.wingAngle);
+                ctx.shadowColor = this.color.glow;
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = this.color.fill;
+                ctx.strokeStyle = this.color.glow;
+                ctx.beginPath();
+                ctx.ellipse(-this.size * wingScale, 0, this.size, this.size * 0.5, 0, 0, Math.PI * 2);
+                ctx.ellipse(this.size * wingScale, 0, this.size, this.size * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        const butterflies = Array.from({ length: 10 }, () => new NeonButterfly());
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            butterflies.forEach(b => { b.update(); b.draw(ctx); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Audio SFX Synthesis
+        let audioCtx = null;
+        function playToastSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } catch(e){}
+        }
+
+        // Side Toast Notifications
+        const sideToastContainer = document.getElementById('sideToastContainer');
+        function showSideToast(message) {
+            playToastSound();
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <span class="toast-icon">🎉</span>
+                <div>
+                    <div class="toast-title">TILE CRACKED!</div>
+                    <div>${message}</div>
+                </div>
+            `;
+            sideToastContainer.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 5000);
+        }
+
+        // Real-time Data Sync & Dynamic Bar Chart Renderer
+        const remTilesCount = document.getElementById('remTilesCount');
+        const unlockedTilesCount = document.getElementById('unlockedTilesCount');
+        const totalHuntersCount = document.getElementById('totalHuntersCount');
+        const lbProgressBar = document.getElementById('lbProgressBar');
+        const leaderboardChart = document.getElementById('leaderboardChart');
+        const lbTileGrid = document.getElementById('lbTileGrid');
+
+        const TILE_ICONS = ['🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩', '🎶', '💫', '⚡', '🏢', '🏛️', '👑'];
+        let previousTilesData = null;
+
+        function renderGrid(tilesData) {
+            lbTileGrid.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const key = `tile_${i}`;
+                const info = tilesData[key];
+                const isBroken = info && info.broken;
+
+                const tile = document.createElement('div');
+                tile.className = `tile ${isBroken ? 'broken' : ''}`;
+                tile.style.visibility = 'visible';
+                tile.style.opacity = isBroken ? '0.4' : '1';
+                tile.style.borderColor = isBroken ? 'rgba(255,0,127,0.3)' : 'var(--neon-cyan)';
+
+                const num = document.createElement('span');
+                num.className = 'tile-number';
+                num.innerText = `#${i + 1}`;
+
+                const icon = document.createElement('span');
+                icon.className = 'tile-icon';
+                icon.innerText = isBroken ? '🔓' : TILE_ICONS[i % TILE_ICONS.length];
+
+                const label = document.createElement('span');
+                label.style.fontSize = '0.6rem';
+                label.innerText = isBroken ? (info.solverName || 'CRACKED') : `TILE ${i + 1}`;
+
+                tile.appendChild(num);
+                tile.appendChild(icon);
+                tile.appendChild(label);
+                lbTileGrid.appendChild(tile);
+            }
+        }
+
+        function handleRealtimeData(tilesData) {
+            tilesData = tilesData || {};
+
+            // Check for newly cracked tiles and fire toasts
+            if (previousTilesData) {
+                for (let i = 0; i < 16; i++) {
+                    const key = `tile_${i}`;
+                    const prev = previousTilesData[key];
+                    const curr = tilesData[key];
+                    if ((!prev || !prev.broken) && curr && curr.broken) {
+                        const solver = curr.solverName || "A Hunter";
+                        showSideToast(`<strong>${solver}</strong> cracked Tile #${i + 1}!`);
+                    }
+                }
+            }
+            previousTilesData = tilesData;
+
+            // Compute statistics & rankings
+            let crackedCount = 0;
+            const playerStats = {};
+
+            for (let i = 0; i < 16; i++) {
+                const key = `tile_${i}`;
+                const info = tilesData[key];
+                if (info && info.broken) {
+                    crackedCount++;
+                    const name = info.solverName || "Anonymous Hunter";
+                    if (!playerStats[name]) {
+                        playerStats[name] = { count: 0, tiles: [] };
+                    }
+                    playerStats[name].count++;
+                    playerStats[name].tiles.push(i + 1);
+                }
+            }
+
+            // Update stats row
+            const remaining = 16 - crackedCount;
+            remTilesCount.innerText = remaining;
+            unlockedTilesCount.innerText = `${crackedCount} / 16`;
+            lbProgressBar.style.width = Math.round((crackedCount / 16) * 100) + '%';
+
+            // Convert to array and sort descending
+            const leaderboard = Object.keys(playerStats).map(name => ({
+                name: name,
+                count: playerStats[name].count,
+                tiles: playerStats[name].tiles
+            })).sort((a, b) => b.count - a.count);
+
+            totalHuntersCount.innerText = leaderboard.length;
+
+            // Render Dynamic Bar Chart
+            if (leaderboard.length === 0) {
+                leaderboardChart.innerHTML = `
+                    <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 30px 0;">
+                        No tiles cracked yet! Be the first to spin and unlock a tile! 🚀
+                    </div>
+                `;
+            } else {
+                leaderboardChart.innerHTML = '';
+                const maxCount = leaderboard[0].count || 1;
+
+                leaderboard.forEach((player, idx) => {
+                    const rankMedal = idx === 0 ? '🥇 1st' : (idx === 1 ? '🥈 2nd' : (idx === 2 ? '🥉 3rd' : `#${idx + 1}`));
+                    const barPct = Math.max(8, Math.round((player.count / 16) * 100));
+
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+
+                    const tilesBadgesHTML = player.tiles.map(t => `<span class="tile-tag">Tile #${t}</span>`).join('');
+
+                    row.innerHTML = `
+                        <div class="bar-info">
+                            <span class="bar-name"><span class="bar-rank">${rankMedal}</span> ${player.name}</span>
+                            <span class="bar-count">${player.count} ${player.count === 1 ? 'Tile' : 'Tiles'}</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${barPct}%;"></div>
+                        </div>
+                        <div class="bar-badges">${tilesBadgesHTML}</div>
+                    `;
+
+                    leaderboardChart.appendChild(row);
+                });
+            }
+
+            renderGrid(tilesData);
+        }
+
+        listenToTileUpdates((data) => {
+            handleRealtimeData(data);
+        });
+    </script>
+</body>
+</html>

@@ -14,12 +14,18 @@
     <!-- Fullscreen Canvas for Neon Butterflies & Magical Particles -->
     <canvas id="butterflyCanvas"></canvas>
 
+    <!-- Side Toast Notifications Container -->
+    <div id="sideToastContainer" class="side-toast-container"></div>
+
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-            <div class="title-badge">NEON QR TREASURE HUNT</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+                <div class="title-badge">NEON SPIN & UNLOCK TREASURE HUNT</div>
+                <a href="leaderboard.html" class="btn btn-sm btn-primary" style="text-decoration: none; padding: 4px 10px; font-size: 0.7rem;">🏆 LEADERBOARD</a>
+            </div>
             <h1 class="title">MYSTICAL LOGO REVEAL</h1>
-            <p class="subtitle">Scan physical QR codes around the venue to unlock and shatter each tile!</p>
+            <p class="subtitle">Spin the neon wheel to select tiles to unlock! If you fail a challenge, spin again.</p>
         </header>
 
         <!-- Main Stage Container -->
@@ -40,7 +46,10 @@
                         <span class="win-icon">✨</span>
                         <h2 class="win-title">ALL TILES UNLOCKED!</h2>
                         <p class="win-text">The magic emblem has been fully unveiled</p>
-                        <button id="btnRehide" class="btn btn-sm btn-primary">Play Again 🔄</button>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button id="btnRehide" class="btn btn-sm btn-primary">Play Again 🔄</button>
+                            <a href="leaderboard.html" class="btn btn-sm btn-primary" style="text-decoration: none;">Leaderboard 🏆</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -67,7 +76,64 @@
             <div class="progress-container">
                 <div id="progressBar" class="progress-bar-fill"></div>
             </div>
+
+            <!-- Spin Wheel Trigger Button & Leaderboard Link -->
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button id="btnOpenSpinWheel" class="btn btn-primary" style="flex: 2; font-size: 0.82rem; padding: 12px;">
+                    🎡 SPIN WHEEL TO SELECT TILE
+                </button>
+                <a href="leaderboard.html" class="btn btn-primary" style="flex: 1; text-decoration: none; font-size: 0.82rem; padding: 12px; text-align: center;">
+                    🏆 RANKINGS
+                </a>
+            </div>
         </section>
+    </div>
+
+    <!-- Spin Wheel Modal Overlay -->
+    <div id="spinWheelModal" class="modal-overlay hidden">
+        <div class="modal-card spin-modal-card">
+            <button id="spinModalCloseBtn" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <span class="modal-badge">NEON WHEEL</span>
+                <h2 class="modal-title">SPIN TO UNLOCK TILE 🎡</h2>
+                <p class="modal-desc">16 Tile Numbers & 16 Misses! Spin to claim your next tile access.</p>
+                <div id="playerDisplayTag" class="player-tag" style="margin-top: 6px; font-size: 0.78rem; color: var(--neon-cyan);">
+                    Player: <strong id="spinPlayerNameDisplay">Hunter</strong> <button id="btnEditPlayerName" class="btn-icon" title="Edit Name">✏️</button>
+                </div>
+            </div>
+
+            <div class="modal-body spin-modal-body">
+                <div class="wheel-wrapper">
+                    <div class="wheel-pointer">▼</div>
+                    <canvas id="wheelCanvas" width="340" height="340"></canvas>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div id="wheelStatus" class="game-status">Ready to spin!</div>
+                <div class="wheel-btn-group" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+                    <button id="btnSpinWheel" class="btn btn-primary btn-sm">SPIN NOW 🎡</button>
+                    <button id="btnPlayUnlockedTile" class="btn btn-primary btn-sm hidden">PLAY CHALLENGE 🚀</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- One-Time Player Name Entry Modal Overlay -->
+    <div id="playerNameModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-badge">WELCOME HUNTER</span>
+                <h2 class="modal-title">ENTER YOUR NAME 🎮</h2>
+                <p class="modal-desc">Enter your In-Game Name once to start spinning and claiming tiles!</p>
+            </div>
+            <div class="modal-body" style="padding: 15px 0;">
+                <input type="text" id="initialPlayerNameInput" placeholder="Enter your name..." style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--neon-cyan); background: rgba(10, 10, 22, 0.9); color: #fff; font-size: 1rem; outline: none; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);" />
+            </div>
+            <div class="modal-footer">
+                <button id="btnSaveInitialPlayerName" class="btn btn-primary btn-sm">Save & Spin 🚀</button>
+            </div>
+        </div>
     </div>
 
     <!-- Mini-Game Modal Overlay -->
@@ -110,7 +176,7 @@
         </div>
     </div>
 
-    <!-- Already Completed QR Code Modal Overlay -->
+    <!-- Already Completed Modal Overlay -->
     <div id="completedModal" class="modal-overlay hidden">
         <div class="modal-card">
             <button id="completedCloseBtn" class="modal-close">&times;</button>
@@ -121,10 +187,10 @@
             </div>
             <div class="modal-body" style="padding: 10px 0;">
                 <div style="font-size: 3rem; margin: 10px 0;">✨ 🔓 ✨</div>
-                <p style="font-size: 0.9rem; color: var(--neon-cyan); font-weight: 600;">TRY SCANNING OTHER QR CODES AROUND THE CAMPUS</p>
+                <p style="font-size: 0.9rem; color: var(--neon-cyan); font-weight: 600;">SPIN THE WHEEL TO TRY ANOTHER TILE</p>
             </div>
             <div class="modal-footer">
-                <button id="completedOkBtn" class="btn btn-primary btn-sm">Got It! 🚀</button>
+                <button id="completedOkBtn" class="btn btn-primary btn-sm">Spin Wheel 🎡</button>
             </div>
         </div>
     </div>

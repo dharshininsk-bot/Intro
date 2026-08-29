@@ -33,12 +33,9 @@ try {
  * Listens for real-time tile updates from Firebase (or LocalStorage fallback)
  */
 function listenToTileUpdates(onUpdateCallback) {
-    if (isFirebaseActive && db) {
-        db.ref('tiles').on('value', (snapshot) => {
-            const data = snapshot.val() || {};
-            onUpdateCallback(data);
-        });
-    } else {
+    function fallbackToLocalStorage() {
+        console.warn("⚠️ Running in LocalStorage mode (Offline / Fallback).");
+        isFirebaseActive = false;
         const localData = JSON.parse(localStorage.getItem('neon_magic_tiles')) || {};
         onUpdateCallback(localData);
 
@@ -48,19 +45,28 @@ function listenToTileUpdates(onUpdateCallback) {
             onUpdateCallback(updated);
         });
     }
+
+    if (isFirebaseActive && db) {
+        db.ref('tiles').on('value', 
+            (snapshot) => {
+                const data = snapshot.val() || {};
+                onUpdateCallback(data);
+            },
+            (error) => {
+                console.error("🔥 Firebase Database Error (Rules Expired or Permission Denied):", error);
+                fallbackToLocalStorage();
+            }
+        );
+    } else {
+        fallbackToLocalStorage();
+    }
 }
 
 /**
  * Marks a specific tile as broken in Firebase Realtime Database
  */
 function setTileBrokenInFirebase(tileIndex, solverName = "A player") {
-    if (isFirebaseActive && db) {
-        db.ref(`tiles/tile_${tileIndex}`).set({
-            broken: true,
-            solverName: solverName,
-            completedAt: Date.now()
-        });
-    } else {
+    const saveToLocalStorage = () => {
         const localData = JSON.parse(localStorage.getItem('neon_magic_tiles')) || {};
         localData[`tile_${tileIndex}`] = { broken: true, solverName: solverName, completedAt: Date.now() };
         localStorage.setItem('neon_magic_tiles', JSON.stringify(localData));
@@ -69,6 +75,19 @@ function setTileBrokenInFirebase(tileIndex, solverName = "A player") {
         if (typeof handleRealtimeUpdate === 'function') {
             handleRealtimeUpdate(localData);
         }
+    };
+
+    if (isFirebaseActive && db) {
+        db.ref(`tiles/tile_${tileIndex}`).set({
+            broken: true,
+            solverName: solverName,
+            completedAt: Date.now()
+        }).catch((err) => {
+            console.error("🔥 Firebase Set Error (Fallback to LocalStorage):", err);
+            saveToLocalStorage();
+        });
+    } else {
+        saveToLocalStorage();
     }
 }
 
@@ -77,7 +96,12 @@ function setTileBrokenInFirebase(tileIndex, solverName = "A player") {
  */
 function resetFirebaseTiles() {
     if (isFirebaseActive && db) {
-        db.ref('tiles').remove();
+        db.ref('tiles').remove().catch(() => {
+            localStorage.removeItem('neon_magic_tiles');
+            if (typeof handleRealtimeUpdate === 'function') {
+                handleRealtimeUpdate({});
+            }
+        });
     } else {
         localStorage.removeItem('neon_magic_tiles');
         if (typeof handleRealtimeUpdate === 'function') {

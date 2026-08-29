@@ -557,6 +557,239 @@ body {
     text-shadow: 0 0 10px var(--neon-pink);
 }
 
+/* ==========================================
+ * SPIN WHEEL STYLING & ANIMATION
+ * ========================================== */
+.spin-modal-card {
+    max-width: 480px;
+    background: rgba(10, 12, 32, 0.97);
+    border: 2px solid var(--neon-pink);
+    box-shadow: 0 0 50px rgba(255, 0, 127, 0.35), inset 0 0 25px rgba(0, 243, 255, 0.1);
+}
+
+.spin-modal-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.wheel-wrapper {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    max-width: 82vw;
+    max-height: 82vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    font-size: 1.8rem;
+    color: var(--neon-gold);
+    text-shadow: 0 0 15px var(--neon-gold), 0 0 30px #ffffff;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+    animation: pointerPulse 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes pointerPulse {
+    0% { transform: translateX(-50%) translateY(0); }
+    100% { transform: translateX(-50%) translateY(4px); }
+}
+
+#wheelCanvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.6);
+    background: #050716;
+}
+
+/* ==========================================
+ * SIDE TOAST POP-UP NOTIFICATIONS
+ * ========================================== */
+.side-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 320px;
+    pointer-events: none;
+}
+
+.toast-notification {
+    pointer-events: auto;
+    background: rgba(10, 14, 34, 0.95);
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+    animation: toastSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), toastFadeOut 0.5s 4.5s forwards ease-in;
+}
+
+@keyframes toastSlideIn {
+    0% { transform: translateX(120%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastFadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9) translateY(-10px); }
+}
+
+.toast-icon {
+    font-size: 1.4rem;
+}
+
+.toast-title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--neon-cyan);
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: transform 0.2s;
+}
+
+.btn-icon:hover {
+    transform: scale(1.2);
+}
+
+/* ==========================================
+ * LEADERBOARD PAGE STYLING
+ * ========================================== */
+.leaderboard-container {
+    width: 100%;
+    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px 14px;
+    position: relative;
+    z-index: 10;
+}
+
+.leaderboard-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(14px);
+    border-radius: 18px;
+    padding: 20px 22px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 243, 255, 0.05);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+    padding-bottom: 10px;
+}
+
+.chart-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--neon-cyan);
+}
+
+.leaderboard-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bar-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.bar-name {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bar-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--neon-gold);
+}
+
+.bar-count {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--neon-cyan);
+    font-weight: 700;
+}
+
+.bar-track {
+    width: 100%;
+    height: 16px;
+    background: rgba(8, 10, 24, 0.8);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+    box-shadow: 0 0 12px var(--neon-cyan);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bar-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.tile-tag {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(255, 0, 127, 0.15);
+    border: 1px solid rgba(255, 0, 127, 0.4);
+    color: var(--neon-pink);
+}
+
 /* Mobile Devices Optimization (< 480px) */
 @media (max-width: 480px) {
     .title { font-size: 1.4rem; }
@@ -568,4 +801,6 @@ body {
     .modal-title { font-size: 1.1rem; }
     .modal-desc { font-size: 0.75rem; }
     .game-status { font-size: 0.72rem; }
+    .wheel-wrapper { width: 280px; height: 280px; }
+    .side-toast-container { right: 10px; left: 10px; max-width: none; }
 }

@@ -322,6 +322,23 @@ const mgCtx = minigameCanvas.getContext('2d');
 const minigameStatus = document.getElementById('minigameStatus');
 const btnStartGame = document.getElementById('btnStartGame');
 
+// Spin Wheel Modal Elements
+const spinWheelModal = document.getElementById('spinWheelModal');
+const spinModalCloseBtn = document.getElementById('spinModalCloseBtn');
+const btnOpenSpinWheel = document.getElementById('btnOpenSpinWheel');
+const wheelCanvas = document.getElementById('wheelCanvas');
+const wCtx = wheelCanvas.getContext('2d');
+const wheelStatus = document.getElementById('wheelStatus');
+const btnSpinWheel = document.getElementById('btnSpinWheel');
+const btnPlayUnlockedTile = document.getElementById('btnPlayUnlockedTile');
+
+// Player Name Modal & Storage
+const playerNameModal = document.getElementById('playerNameModal');
+const initialPlayerNameInput = document.getElementById('initialPlayerNameInput');
+const btnSaveInitialPlayerName = document.getElementById('btnSaveInitialPlayerName');
+const spinPlayerNameDisplay = document.getElementById('spinPlayerNameDisplay');
+const btnEditPlayerName = document.getElementById('btnEditPlayerName');
+
 // Name Prompt Modal Elements
 const namePromptModal = document.getElementById('namePromptModal');
 const playerGameNameInput = document.getElementById('playerGameNameInput');
@@ -334,14 +351,282 @@ const completedOkBtn = document.getElementById('completedOkBtn');
 const completedTileBadge = document.getElementById('completedTileBadge');
 const completedMessage = document.getElementById('completedMessage');
 
+// Side Toast Container Element
+const sideToastContainer = document.getElementById('sideToastContainer');
+
 let totalTiles = 16;
 let brokenCount = 0;
 let activeTileElement = null;
 let activeTileIndex = -1;
 let currentGameLoop = null;
-let scannedTileIndex = null; // Currently scanned tile from URL query parameter ?tile=X
+let unlockedTileIndex = null; // Currently unlocked tile index granted by Spin Wheel
 let completedModalTimeout = null;
 let allTilesStateData = {};
+let previousTilesData = null;
+
+let savedPlayerName = localStorage.getItem('neon_player_name') || '';
+
+function updatePlayerNameDisplay() {
+    if (spinPlayerNameDisplay) {
+        spinPlayerNameDisplay.innerText = savedPlayerName.trim() ? savedPlayerName : 'Hunter';
+    }
+}
+
+function promptForPlayerName(onSuccessCallback) {
+    initialPlayerNameInput.value = savedPlayerName;
+    playerNameModal.classList.remove('hidden');
+    setTimeout(() => initialPlayerNameInput.focus(), 200);
+
+    const handleSave = () => {
+        const val = initialPlayerNameInput.value.trim();
+        savedPlayerName = val || 'Hunter';
+        localStorage.setItem('neon_player_name', savedPlayerName);
+        updatePlayerNameDisplay();
+        playerNameModal.classList.add('hidden');
+        btnSaveInitialPlayerName.removeEventListener('click', handleSave);
+        if (onSuccessCallback) onSuccessCallback();
+    };
+
+    btnSaveInitialPlayerName.onclick = handleSave;
+    initialPlayerNameInput.onkeydown = (e) => {
+        if (e.key === 'Enter') handleSave();
+    };
+}
+
+if (btnEditPlayerName) {
+    btnEditPlayerName.addEventListener('click', () => {
+        promptForPlayerName();
+    });
+}
+
+function showSideToast(message) {
+    if (!sideToastContainer) return;
+    playTone(600, 0.15);
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `
+        <span class="toast-icon">🎉</span>
+        <div>
+            <div class="toast-title">TILE CRACKED!</div>
+            <div>${message}</div>
+        </div>
+    `;
+    sideToastContainer.appendChild(toast);
+    setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 5000);
+}
+
+// ==========================================
+// 3.1 SPIN WHEEL ENGINE (32 SEGMENTS: 16 NUMBERS + 16 MISSES)
+// ==========================================
+const WHEEL_SLOTS = [];
+for (let i = 1; i <= 16; i++) {
+    WHEEL_SLOTS.push({ type: 'number', value: i, label: `${i}` });
+    WHEEL_SLOTS.push({ type: 'miss', value: null, label: 'MISS' });
+}
+const TOTAL_SLOTS = WHEEL_SLOTS.length; // 32
+const ARC_SIZE = (Math.PI * 2) / TOTAL_SLOTS;
+
+let isWheelSpinning = false;
+let wheelAngle = 0;
+let wheelSpeed = 0;
+let wheelAnimId = null;
+let lastSegmentTickIndex = -1;
+
+function drawSpinWheel() {
+    if (!wheelCanvas) return;
+    const width = wheelCanvas.width;
+    const height = wheelCanvas.height;
+    const cx = width / 2;
+    const cy = height / 2;
+    const outerRadius = width / 2 - 10;
+    const innerRadius = 38;
+
+    wCtx.clearRect(0, 0, width, height);
+
+    // Outer Glow Ring
+    wCtx.save();
+    wCtx.shadowColor = '#00f3ff';
+    wCtx.shadowBlur = 16;
+    wCtx.strokeStyle = '#00f3ff';
+    wCtx.lineWidth = 4;
+    wCtx.beginPath();
+    wCtx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+    wCtx.stroke();
+    wCtx.restore();
+
+    // Render 32 Slices
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+        const slot = WHEEL_SLOTS[i];
+        const startAngle = wheelAngle + i * ARC_SIZE - Math.PI / 2;
+        const endAngle = startAngle + ARC_SIZE;
+        const midAngle = startAngle + ARC_SIZE / 2;
+
+        wCtx.save();
+        wCtx.beginPath();
+        wCtx.moveTo(cx, cy);
+        wCtx.arc(cx, cy, outerRadius, startAngle, endAngle);
+        wCtx.closePath();
+
+        if (slot.type === 'number') {
+            const numIndex = (slot.value - 1) % NEON_COLORS.length;
+            wCtx.fillStyle = NEON_COLORS[numIndex].fill.replace('0.4', '0.85');
+            wCtx.strokeStyle = NEON_COLORS[numIndex].glow;
+        } else {
+            wCtx.fillStyle = 'rgba(15, 18, 42, 0.95)';
+            wCtx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
+        }
+        wCtx.fill();
+        wCtx.lineWidth = 1;
+        wCtx.stroke();
+
+        // Draw Labels
+        wCtx.translate(cx, cy);
+        wCtx.rotate(midAngle);
+        wCtx.textAlign = 'right';
+        wCtx.textBaseline = 'middle';
+
+        if (slot.type === 'number') {
+            wCtx.fillStyle = '#ffffff';
+            wCtx.font = 'bold 12px "Orbitron", sans-serif';
+            wCtx.shadowColor = '#000';
+            wCtx.shadowBlur = 4;
+            wCtx.fillText(slot.label, outerRadius - 12, 0);
+        } else {
+            wCtx.fillStyle = '#ff007f';
+            wCtx.font = 'bold 9px "Orbitron", sans-serif';
+            wCtx.fillText('MISS ❌', outerRadius - 10, 0);
+        }
+
+        wCtx.restore();
+    }
+
+    // Center Hub
+    wCtx.save();
+    wCtx.fillStyle = '#0a0d24';
+    wCtx.strokeStyle = '#ffe600';
+    wCtx.lineWidth = 3;
+    wCtx.shadowColor = '#ffe600';
+    wCtx.shadowBlur = 12;
+    wCtx.beginPath();
+    wCtx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+    wCtx.fill();
+    wCtx.stroke();
+
+    wCtx.fillStyle = '#ffe600';
+    wCtx.font = '900 11px "Orbitron", sans-serif';
+    wCtx.textAlign = 'center';
+    wCtx.textBaseline = 'middle';
+    wCtx.fillText('SPIN', cx, cy);
+    wCtx.restore();
+}
+
+function animateSpinWheel() {
+    if (!isWheelSpinning) return;
+
+    wheelAngle += wheelSpeed;
+    wheelSpeed *= 0.984; // Smooth friction
+
+    // Tick SFX per segment pass
+    const normalizedAngle = (Math.PI * 2 - (wheelAngle % (Math.PI * 2))) % (Math.PI * 2);
+    const currentSegmentIdx = Math.floor(normalizedAngle / ARC_SIZE) % TOTAL_SLOTS;
+
+    if (currentSegmentIdx !== lastSegmentTickIndex) {
+        lastSegmentTickIndex = currentSegmentIdx;
+        playTone(700, 0.02);
+    }
+
+    drawSpinWheel();
+
+    if (wheelSpeed <= 0.002) {
+        wheelSpeed = 0;
+        isWheelSpinning = false;
+        onSpinComplete(currentSegmentIdx);
+    } else {
+        wheelAnimId = requestAnimationFrame(animateSpinWheel);
+    }
+}
+
+function startSpin() {
+    if (isWheelSpinning) return;
+
+    // Check if player name is saved before spinning!
+    if (!savedPlayerName.trim()) {
+        promptForPlayerName(() => startSpin());
+        return;
+    }
+
+    isWheelSpinning = true;
+    wheelSpeed = Math.random() * 0.35 + 0.45; // Initial rotational force
+    wheelStatus.innerText = "Wheel is spinning... 🌀";
+    wheelStatus.className = "game-status";
+    btnSpinWheel.classList.add('hidden');
+    btnPlayUnlockedTile.classList.add('hidden');
+
+    if (wheelAnimId) cancelAnimationFrame(wheelAnimId);
+    animateSpinWheel();
+}
+
+function onSpinComplete(landedSegmentIdx) {
+    const slot = WHEEL_SLOTS[landedSegmentIdx];
+
+    if (slot.type === 'miss') {
+        unlockedTileIndex = null;
+        wheelStatus.innerText = "❌ MISS! No tile selected. Spin again!";
+        wheelStatus.className = "game-status lose";
+        playTone(200, 0.25);
+        btnSpinWheel.innerText = "SPIN AGAIN 🎡";
+        btnSpinWheel.classList.remove('hidden');
+    } else {
+        const tileNum = slot.value;
+        const tileIdx = tileNum - 1;
+        const tileKey = `tile_${tileIdx}`;
+        const tileInfo = allTilesStateData[tileKey];
+        const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
+        const isBroken = (tileInfo && tileInfo.broken) || (targetTile && targetTile.classList.contains('broken'));
+
+        if (isBroken) {
+            unlockedTileIndex = null;
+            const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
+            wheelStatus.innerText = `Tile #${tileNum} is already cracked by ${solver}! Spin again!`;
+            wheelStatus.className = "game-status";
+            btnSpinWheel.innerText = "SPIN AGAIN 🎡";
+            btnSpinWheel.classList.remove('hidden');
+        } else {
+            unlockedTileIndex = tileIdx;
+            wheelStatus.innerText = `✨ TILE #${tileNum} UNLOCKED! ✨`;
+            wheelStatus.className = "game-status win";
+            playSuccessFanfare();
+            btnPlayUnlockedTile.innerText = `PLAY TILE #${tileNum} 🚀`;
+            btnPlayUnlockedTile.classList.remove('hidden');
+        }
+    }
+}
+
+function openSpinWheelModal() {
+    updatePlayerNameDisplay();
+    spinWheelModal.classList.remove('hidden');
+    drawSpinWheel();
+}
+
+function closeSpinWheelModal() {
+    if (isWheelSpinning) return;
+    spinWheelModal.classList.add('hidden');
+}
+
+btnSpinWheel.addEventListener('click', startSpin);
+btnOpenSpinWheel.addEventListener('click', openSpinWheelModal);
+spinModalCloseBtn.addEventListener('click', closeSpinWheelModal);
+
+btnPlayUnlockedTile.addEventListener('click', () => {
+    if (unlockedTileIndex !== null) {
+        const targetTile = document.querySelector(`.tile[data-index="${unlockedTileIndex}"]`);
+        closeSpinWheelModal();
+        openMiniGameModal(unlockedTileIndex, targetTile);
+    }
+});
+
 
 // Game Type Definitions for Tiles 1..16
 const MINI_GAMES = [
@@ -404,11 +689,13 @@ function initGrid() {
                 return;
             }
 
-            // Tile can only be played if scanned via QR code for this specific tile
-            if (scannedTileIndex === i) {
+            // Tile can only be played if selected via Spin Wheel
+            if (unlockedTileIndex === i) {
                 openMiniGameModal(i, tile);
             } else {
-                alert(`🔒 TILE #${i + 1} IS LOCKED!\n\nYou must scan the physical QR code for Tile #${i + 1} to unlock and play this challenge!`);
+                wheelStatus.innerText = `🔒 TILE #${i + 1} IS LOCKED! SPIN THE WHEEL TO SELECT!`;
+                wheelStatus.className = "game-status lose";
+                openSpinWheelModal();
             }
         });
 
@@ -418,35 +705,27 @@ function initGrid() {
     updateStats();
 }
 
-let isInitialLoadProcessed = false;
 let hasReceivedRealtimeData = false;
-
-function checkScannedTileStatus() {
-    if (scannedTileIndex === null || isInitialLoadProcessed) return;
-
-    const tileIdx = scannedTileIndex;
-    const tileNum = tileIdx + 1;
-    const tileKey = `tile_${tileIdx}`;
-    const tileInfo = allTilesStateData[tileKey];
-    const targetTile = document.querySelector(`.tile[data-index="${tileIdx}"]`);
-
-    const isBroken = (tileInfo && tileInfo.broken) || (targetTile && targetTile.classList.contains('broken'));
-
-    if (isBroken) {
-        isInitialLoadProcessed = true;
-        const solver = (tileInfo && tileInfo.solverName) ? tileInfo.solverName : "A player";
-        showAlreadyCompletedModal(tileNum, solver);
-    } else if (hasReceivedRealtimeData && targetTile) {
-        isInitialLoadProcessed = true;
-        openMiniGameModal(tileIdx, targetTile);
-    }
-}
 
 /**
  * Realtime Tile Sync callback (Receives data from Firebase or LocalStorage)
  */
 function handleRealtimeUpdate(tilesData) {
     hasReceivedRealtimeData = true;
+
+    // Check for newly cracked tiles to show live side toasts
+    if (previousTilesData) {
+        for (let i = 0; i < 16; i++) {
+            const key = `tile_${i}`;
+            const prev = previousTilesData[key];
+            const curr = tilesData[key];
+            if ((!prev || !prev.broken) && curr && curr.broken) {
+                const solver = curr.solverName || "A Hunter";
+                showSideToast(`<strong>${solver}</strong> cracked Tile #${i + 1}!`);
+            }
+        }
+    }
+    previousTilesData = tilesData || {};
     allTilesStateData = tilesData || {};
     let currentBroken = 0;
     const tiles = document.querySelectorAll('.tile');
@@ -471,9 +750,6 @@ function handleRealtimeUpdate(tilesData) {
     if (brokenCount >= totalTiles) {
         triggerVictory();
     }
-
-    // Check scanned tile after initial data load
-    checkScannedTileStatus();
 }
 
 /**
@@ -501,6 +777,9 @@ function onClick(tileElement, solverName = "A Player") {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     spawnShatterBurst(centerX, centerY);
+
+    // Reset unlocked tile authorization after shattering
+    unlockedTileIndex = null;
 
     // Save broken state & solver name to Firebase Realtime Database
     setTileBrokenInFirebase(tileIdx, solverName);
@@ -538,7 +817,7 @@ function triggerVictory() {
 
 
 // ==========================================
-// 4. MINI-GAME MODAL & QR CODE LOGIC
+// 4. MINI-GAME MODAL LOGIC
 // ==========================================
 function openMiniGameModal(tileIndex, tileElement) {
     activeTileElement = tileElement;
@@ -575,6 +854,8 @@ function closeMiniGameModal() {
         cancelAnimationFrame(currentGameLoop);
         currentGameLoop = null;
     }
+    // Revoke unlocked tile access if player closes modal without winning
+    unlockedTileIndex = null;
     minigameModal.classList.add('hidden');
 }
 
@@ -604,7 +885,10 @@ function closeCompletedModal() {
 
 modalCloseBtn.addEventListener('click', closeMiniGameModal);
 completedCloseBtn.addEventListener('click', closeCompletedModal);
-completedOkBtn.addEventListener('click', closeCompletedModal);
+completedOkBtn.addEventListener('click', () => {
+    closeCompletedModal();
+    openSpinWheelModal();
+});
 
 btnStartGame.addEventListener('click', () => {
     btnStartGame.classList.add('hidden');
@@ -629,30 +913,12 @@ function onMiniGameWin() {
 
     setTimeout(() => {
         closeMiniGameModal();
-        openNamePromptModal();
+        // Automatically crack tile using saved player name!
+        if (activeTileElement) {
+            const nameToUse = savedPlayerName.trim() ? savedPlayerName : "Anonymous Hunter";
+            onClick(activeTileElement, nameToUse);
+        }
     }, 1100);
-}
-
-function openNamePromptModal() {
-    playerGameNameInput.value = '';
-    namePromptModal.classList.remove('hidden');
-    setTimeout(() => playerGameNameInput.focus(), 200);
-}
-
-btnSubmitGameName.addEventListener('click', handleNameSubmission);
-playerGameNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        handleNameSubmission();
-    }
-});
-
-function handleNameSubmission() {
-    const enteredName = playerGameNameInput.value.trim() || "Anonymous Hunter";
-    namePromptModal.classList.add('hidden');
-
-    if (activeTileElement) {
-        onClick(activeTileElement, enteredName);
-    }
 }
 
 function onMiniGameLose(reason = "Game Over!") {
@@ -660,7 +926,9 @@ function onMiniGameLose(reason = "Game Over!") {
         cancelAnimationFrame(currentGameLoop);
         currentGameLoop = null;
     }
-    minigameStatus.innerText = "OOPS... NICE TRY!! TRY SCANNING OTHER QR CODES AROUND THE CAMPUS";
+    // Must spin again if failed!
+    unlockedTileIndex = null;
+    minigameStatus.innerText = "OOPS... NICE TRY!! SPIN THE WHEEL AGAIN TO RETRY!";
     minigameStatus.className = "game-status lose";
     btnStartGame.classList.add('hidden');
 }
@@ -705,23 +973,17 @@ function startMiniGame(type) {
     }
 }
 
-// Detect QR Code URL Query Parameter immediately (e.g., index.html?tile=3)
-(function parseURLParams() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tileQuery = urlParams.get('tile');
-    if (tileQuery) {
-        const tileNum = parseInt(tileQuery, 10); // 1-based (1 to 16)
-        if (!isNaN(tileNum) && tileNum >= 1 && tileNum <= 16) {
-            scannedTileIndex = tileNum - 1;
-        }
-    }
-})();
-
 // Startup Initialization & Realtime Subscription
 initGrid();
+updatePlayerNameDisplay();
 
 listenToTileUpdates((tilesData) => {
     handleRealtimeUpdate(tilesData);
 });
+
+// Display Spin Wheel Modal on Link Open
+setTimeout(() => {
+    openSpinWheelModal();
+}, 300);
 
 

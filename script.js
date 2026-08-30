@@ -359,9 +359,7 @@ const sideToastContainer = document.getElementById('sideToastContainer');
 // ==========================================
 // DYNAMIC GRID & TOTAL TILES CONFIGURATION
 // ==========================================
-const GRID_COLS = 7;
-const GRID_ROWS = 7;
-const TOTAL_TILES = GRID_COLS * GRID_ROWS; // 49
+// GRID_COLS, GRID_ROWS, TOTAL_TILES are now imported from config.js
 let totalTiles = TOTAL_TILES;
 let brokenCount = 0;
 let activeTileElement = null;
@@ -371,6 +369,17 @@ let unlockedTileIndex = null; // Currently unlocked tile index granted by Spin W
 let completedModalTimeout = null;
 let allTilesStateData = {};
 let previousTilesData = null;
+
+function updateLogoImageEffect() {
+    const logoImg = document.getElementById('logoImage');
+    if (!logoImg) return;
+    const remainingRatio = totalTiles > 0 ? (totalTiles - brokenCount) / totalTiles : 0;
+    // Enhanced non-linear blur scale (pow 0.6) so blur stays strong even when only 1 or 2 tiles are left
+    const effectiveRatio = Math.pow(remainingRatio, 0.6);
+    const blurPx = (effectiveRatio * 35).toFixed(2);
+    const brightnessPct = ((1 - effectiveRatio * 0.75) * 100).toFixed(2);
+    logoImg.style.filter = `blur(${blurPx}px) brightness(${brightnessPct}%)`;
+}
 
 let savedPlayerName = localStorage.getItem('neon_player_name') || '';
 
@@ -476,7 +485,7 @@ const BASE_GAME_TYPES = [
 ];
 
 function getGameConfigForTile(tileIndex) {
-    const gameIdx = (tileIndex * 7 + (tileIndex % 3) * 5 + 3) % BASE_GAME_TYPES.length;
+    const gameIdx = tileIndex % BASE_GAME_TYPES.length;
     const base = BASE_GAME_TYPES[gameIdx];
     const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
     const cycle = Math.floor(tileIndex / BASE_GAME_TYPES.length);
@@ -872,7 +881,7 @@ function handleRealtimeUpdate(tilesData) {
         for (let i = 0; i < TOTAL_TILES; i++) {
             const key = `tile_${i}`;
             const prev = previousTilesData[key];
-            const curr = tilesData[key];
+            const curr = tilesData ? tilesData[key] : null;
             if ((!prev || !prev.broken) && curr && curr.broken) {
                 const solver = curr.solverName || "A Hunter";
                 showSideToast(`<strong>${solver}</strong> cracked Tile #${i + 1}!`);
@@ -881,12 +890,19 @@ function handleRealtimeUpdate(tilesData) {
     }
     previousTilesData = tilesData || {};
     allTilesStateData = tilesData || {};
+
+    // Check grid count in DOM matches TOTAL_TILES
+    const tilesInDom = document.querySelectorAll('.tile');
+    if (tilesInDom.length !== TOTAL_TILES) {
+        initGrid();
+    }
+
     let currentBroken = 0;
     const tiles = document.querySelectorAll('.tile');
 
     tiles.forEach((tileEl, idx) => {
         const key = `tile_${idx}`;
-        const info = tilesData[key];
+        const info = tilesData ? tilesData[key] : null;
 
         if (info && info.broken) {
             currentBroken++;
@@ -902,7 +918,7 @@ function handleRealtimeUpdate(tilesData) {
     updateStats();
     drawHorizontalSpinner();
 
-    if (brokenCount >= totalTiles) {
+    if (totalTiles > 0 && brokenCount >= totalTiles) {
         triggerVictory();
     }
 }
@@ -961,6 +977,8 @@ function updateStats() {
     progressTextEl.innerText = progressPct + '%';
     progressBarEl.style.width = progressPct + '%';
 
+    updateLogoImageEffect();
+
     if (brokenCount >= totalTiles) {
         if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = 'none';
         if (btnRankings) {
@@ -1013,7 +1031,7 @@ function openMiniGameModal(tileIndex, tileElement) {
     mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
     mgCtx.fillStyle = '#0a0a16';
     mgCtx.fillRect(0, 0, minigameCanvas.width, minigameCanvas.height);
-    
+
     minigameModal.classList.remove('hidden');
 }
 

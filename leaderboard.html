@@ -75,6 +75,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <!-- App Scripts -->
+    <script src="config.js"></script>
     <script src="firebase-config.js"></script>
 
     <script>
@@ -189,10 +190,6 @@
         const lbProgressBar = document.getElementById('lbProgressBar');
         const leaderboardChart = document.getElementById('leaderboardChart');
         const lbTileGrid = document.getElementById('lbTileGrid');
-
-        const GRID_COLS = 7;
-        const GRID_ROWS = 7;
-        const TOTAL_TILES = GRID_COLS * GRID_ROWS; // 49
 
         const TILE_ICONS = [
             '🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩',

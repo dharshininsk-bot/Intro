@@ -27,7 +27,7 @@
             <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 6px;">
                 <div class="title-badge">SPIN & WIN</div>
             </div>
-            <h1 class="title">MYSTICAL LOGO REVEAL</h1>
+            <h1 class="title">REVEAL</h1>
             <p class="subtitle">Spin the neon wheel to select tiles to unlock! If you fail a challenge, spin again.</p>
         </header>
 
@@ -72,7 +72,7 @@
                 style="display: flex; gap: 8px; margin-top: 4px; justify-content: center; width: 100%;">
                 <button id="btnOpenSpinWheel" class="btn btn-primary"
                     style="flex: 2; font-size: 0.82rem; padding: 12px;">
-                    🎰 SPIN TO SELECT TILE
+                    SPIN TO SELECT TILE
                 </button>
                 <a id="btnRankings" href="leaderboard.html" class="btn btn-primary"
                     style="flex: 1; text-decoration: none; font-size: 0.82rem; padding: 12px; text-align: center;">
@@ -88,7 +88,7 @@
             <button id="spinModalCloseBtn" class="modal-close">&times;</button>
             <div class="modal-header">
                 <span class="modal-badge">NEON SPINNER</span>
-                <h2 class="modal-title">SPIN TO UNLOCK TILE 🎰</h2>
+                <h2 class="modal-title">SPIN TO UNLOCK TILE </h2>
                 <p class="modal-desc">Horizontal reel scrolling! Spin to land on your next tile challenge.</p>
                 <div id="playerDisplayTag" class="player-tag"
                     style="margin-top: 6px; font-size: 0.78rem; color: var(--neon-cyan);">
@@ -106,8 +106,9 @@
             </div>
 
             <div class="modal-footer">
-                <div id="wheelStatus" class="game-status">Click SPIN to roll the horizontal reel! 🎰</div>
-                <button id="btnSpinReel" class="btn btn-primary btn-sm" style="padding: 9px 28px; font-size: 0.85rem; margin-top: 4px;">SPIN REEL 🎰</button>
+                <div id="wheelStatus" class="game-status">Click SPIN to roll the horizontal reel! </div>
+                <button id="btnSpinReel" class="btn btn-primary btn-sm"
+                    style="padding: 9px 28px; font-size: 0.85rem; margin-top: 4px;">SPIN REEL </button>
             </div>
         </div>
     </div>
@@ -151,7 +152,7 @@
 
             <div class="modal-footer">
                 <div id="minigameStatus" class="game-status">Ready to play!</div>
-                <button id="btnStartGame" class="btn btn-primary btn-sm">Start Challenge 🚀</button>
+                <button id="btnStartGame" class="btn btn-primary btn-sm">Start Challenge </button>
             </div>
         </div>
     </div>
@@ -161,7 +162,7 @@
         <div class="modal-card">
             <div class="modal-header">
                 <span id="nameTileBadge" class="modal-badge">TILE UNLOCKED!</span>
-                <h2 class="modal-title">VICTORY! 🎉</h2>
+                <h2 class="modal-title">VICTORY! </h2>
                 <p class="modal-desc">May I know your In-Game Name?</p>
             </div>
             <div class="modal-body" style="padding: 15px 0;">
@@ -169,7 +170,7 @@
                     style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--neon-cyan); background: rgba(10, 10, 22, 0.9); color: #fff; font-size: 1rem; outline: none; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);" />
             </div>
             <div class="modal-footer">
-                <button id="btnSubmitGameName" class="btn btn-primary btn-sm">Submit 🚀</button>
+                <button id="btnSubmitGameName" class="btn btn-primary btn-sm">Submit </button>
             </div>
         </div>
     </div>
@@ -199,6 +200,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
     <!-- App Scripts -->
+    <script src="config.js"></script>
     <script src="firebase-config.js"></script>
     <script src="minigames.js"></script>
     <script src="script.js"></script>

@@ -304,6 +304,7 @@ function playSuccessFanfare() {
 // ==========================================
 // 3. TILE GRID & APP CONTROLLER
 // ==========================================
+const pageTitleEl = document.getElementById('pageTitle') || document.querySelector('.header .title');
 const tileGrid = document.getElementById('tileGrid');
 const tilesLeftEl = document.getElementById('tilesLeft');
 const tilesBrokenEl = document.getElementById('tilesBroken');
@@ -980,6 +981,7 @@ function updateStats() {
     updateLogoImageEffect();
 
     if (brokenCount >= totalTiles) {
+        if (pageTitleEl) pageTitleEl.innerText = "AR/VR & GAME DEV";
         if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = 'none';
         if (btnRankings) {
             btnRankings.style.flex = 'none';
@@ -988,6 +990,7 @@ function updateStats() {
             btnRankings.style.margin = '0 auto';
         }
     } else {
+        if (pageTitleEl) pageTitleEl.innerText = "REVEAL";
         if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = '';
         if (btnRankings) {
             btnRankings.style.flex = '1';

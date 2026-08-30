@@ -27,8 +27,8 @@
             <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 6px;">
                 <div class="title-badge">SPIN & WIN</div>
             </div>
-            <h1 class="title">REVEAL</h1>
-            <p class="subtitle">Spin the neon wheel to select tiles to unlock! If you fail a challenge, spin again.</p>
+            <h1 id="pageTitle" class="title">REVEAL</h1>
+            <p class="subtitle">Spin the reel and crack the tiles to reveal! If you fail a challenge, spin again.</p>
         </header>
 
         <!-- Main Stage Container -->
@@ -87,9 +87,8 @@
         <div class="modal-card spin-modal-card">
             <button id="spinModalCloseBtn" class="modal-close">&times;</button>
             <div class="modal-header">
-                <span class="modal-badge">NEON SPINNER</span>
                 <h2 class="modal-title">SPIN TO UNLOCK TILE </h2>
-                <p class="modal-desc">Horizontal reel scrolling! Spin to land on your next tile challenge.</p>
+                <p class="modal-desc">Reel scrolling! Spin to land on your next tile challenge.</p>
                 <div id="playerDisplayTag" class="player-tag"
                     style="margin-top: 6px; font-size: 0.78rem; color: var(--neon-cyan);">
                     Player: <strong id="spinPlayerNameDisplay">Hunter</strong>
@@ -106,7 +105,7 @@
             </div>
 
             <div class="modal-footer">
-                <div id="wheelStatus" class="game-status">Click SPIN to roll the horizontal reel! </div>
+                <div id="wheelStatus" class="game-status">Click SPIN to roll the reel! </div>
                 <button id="btnSpinReel" class="btn btn-primary btn-sm"
                     style="padding: 9px 28px; font-size: 0.85rem; margin-top: 4px;">SPIN REEL </button>
             </div>

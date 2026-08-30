@@ -21,9 +21,9 @@ try {
         firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         isFirebaseActive = true;
-        console.log("🔥 Firebase initialized successfully!");
+        console.log("Firebase initialized successfully!");
     } else {
-        console.warn("⚠️ Running in LocalStorage mode until Firebase keys are added.");
+        console.warn("Running in LocalStorage mode until Firebase keys are added.");
     }
 } catch (err) {
     console.error("Firebase Init Error:", err);
@@ -34,7 +34,7 @@ try {
  */
 function listenToTileUpdates(onUpdateCallback) {
     function fallbackToLocalStorage() {
-        console.warn("⚠️ Running in LocalStorage mode (Offline / Fallback).");
+        console.warn("Running in LocalStorage mode (Offline / Fallback).");
         isFirebaseActive = false;
         const localData = JSON.parse(localStorage.getItem('neon_magic_tiles')) || {};
         onUpdateCallback(localData);
@@ -53,7 +53,7 @@ function listenToTileUpdates(onUpdateCallback) {
                 onUpdateCallback(data);
             },
             (error) => {
-                console.error("🔥 Firebase Database Error (Rules Expired or Permission Denied):", error);
+                console.error("Firebase Database Error (Rules Expired or Permission Denied):", error);
                 fallbackToLocalStorage();
             }
         );
@@ -83,7 +83,7 @@ function setTileBrokenInFirebase(tileIndex, solverName = "A player") {
             solverName: solverName,
             completedAt: Date.now()
         }).catch((err) => {
-            console.error("🔥 Firebase Set Error (Fallback to LocalStorage):", err);
+            console.error("Firebase Set Error (Fallback to LocalStorage):", err);
             saveToLocalStorage();
         });
     } else {

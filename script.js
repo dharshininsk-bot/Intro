@@ -412,22 +412,22 @@ function promptForPlayerName(onSuccessCallback) {
         const val = initialPlayerNameInput.value.trim();
         if (!val) {
             if (playerNameError) {
-                playerNameError.innerText = "❌ Please enter a valid name!";
+                playerNameError.innerText = "Please enter a valid name!";
                 playerNameError.classList.remove('hidden');
             }
             return;
         }
 
         btnSaveInitialPlayerName.disabled = true;
-        btnSaveInitialPlayerName.innerText = "Checking... ⏳";
+        btnSaveInitialPlayerName.innerText = "Checking...";
 
         checkIfPlayerNameTaken(val, (isTaken) => {
             btnSaveInitialPlayerName.disabled = false;
-            btnSaveInitialPlayerName.innerText = "Save & Spin 🚀";
+            btnSaveInitialPlayerName.innerText = "Save & Spin";
 
             if (isTaken) {
                 if (playerNameError) {
-                    playerNameError.innerText = `❌ Name "${val}" is already taken! Please enter a different name.`;
+                    playerNameError.innerText = `Name "${val}" is already taken! Please enter a different name.`;
                     playerNameError.classList.remove('hidden');
                 }
                 initialPlayerNameInput.focus();
@@ -457,7 +457,6 @@ function showSideToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
     toast.innerHTML = `
-        <span class="toast-icon">🎉</span>
         <div>
             <div class="toast-title">TILE CRACKED!</div>
             <div>${message}</div>
@@ -499,13 +498,7 @@ function getGameConfigForTile(tileIndex) {
     };
 }
 
-const TILE_ICONS = [
-    '🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩',
-    '🎶', '💫', '⚡', '🏢', '🏛️', '👑', '🔥', '💎', '🚀', '🔮',
-    '🛸', '🎯', '🌟', '🕹️', '👾', '🌈', '🌌', '⚡', '🌀', '🏆',
-    '🗝️', '🛡️', '⚔️', '🪄', '🎩', '🎲', '♟️', '🎳', '🎸', '🥁',
-    '🎺', '🎻', '🪐', '☄️', '🌙', '☀️', '🌋', '🌊', '🌴'
-];
+const TILE_ICONS = Array.from({ length: 50 }, (_, idx) => `${idx + 1}`);
 
 // ==========================================
 // 3.2 HORIZONTAL SPINNER REEL ENGINE
@@ -567,7 +560,7 @@ function drawHorizontalSpinner() {
         sCtx.font = 'bold 18px "Orbitron", sans-serif';
         sCtx.textAlign = 'center';
         sCtx.textBaseline = 'middle';
-        sCtx.fillText('ALL TILES CLEARED! 🏆', cx, cy);
+        sCtx.fillText('ALL TILES CLEARED!', cx, cy);
         sCtx.restore();
         return;
     }
@@ -620,19 +613,11 @@ function drawHorizontalSpinner() {
             sCtx.textAlign = 'center';
             sCtx.textBaseline = 'middle';
 
-            sCtx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            sCtx.font = '600 10px "Orbitron", sans-serif';
-            sCtx.fillText('TILE', 0, -26);
-
             sCtx.fillStyle = '#ffffff';
-            sCtx.font = 'bold 22px "Orbitron", sans-serif';
+            sCtx.font = 'bold 24px "Orbitron", sans-serif';
             sCtx.shadowColor = colorObj.glow;
-            sCtx.shadowBlur = 6;
-            sCtx.fillText(`#${slot.value}`, 0, -2);
-
-            sCtx.shadowBlur = 0;
-            sCtx.font = '16px "Orbitron", sans-serif';
-            sCtx.fillText(TILE_ICONS[(slot.value - 1) % TILE_ICONS.length] || '⭐', 0, 24);
+            sCtx.shadowBlur = 8;
+            sCtx.fillText(`${slot.value}`, 0, 0);
         } else {
             sCtx.fillStyle = isCloseToCenter ? 'rgba(32, 10, 24, 0.95)' : 'rgba(18, 8, 18, 0.85)';
             sCtx.strokeStyle = isCloseToCenter ? '#ff007f' : 'rgba(255, 0, 127, 0.45)';
@@ -655,19 +640,11 @@ function drawHorizontalSpinner() {
             sCtx.textAlign = 'center';
             sCtx.textBaseline = 'middle';
 
-            sCtx.fillStyle = 'rgba(255, 0, 127, 0.6)';
-            sCtx.font = '600 10px "Orbitron", sans-serif';
-            sCtx.fillText('NO TILE', 0, -24);
-
             sCtx.fillStyle = '#ff007f';
-            sCtx.font = 'bold 18px "Orbitron", sans-serif';
+            sCtx.font = 'bold 20px "Orbitron", sans-serif';
             sCtx.shadowColor = '#ff007f';
             sCtx.shadowBlur = 8;
-            sCtx.fillText('MISS', 0, -2);
-
-            sCtx.shadowBlur = 0;
-            sCtx.font = '18px "Orbitron", sans-serif';
-            sCtx.fillText('❌', 0, 24);
+            sCtx.fillText('MISS', 0, 0);
         }
 
         sCtx.restore();
@@ -730,7 +707,7 @@ function startSpin() {
 
     const activeSlots = getActiveWheelSlots();
     if (activeSlots.length === 0) {
-        wheelStatus.innerText = "🎉 ALL TILES HAVE BEEN BROKEN!";
+        wheelStatus.innerText = "ALL TILES HAVE BEEN BROKEN!";
         wheelStatus.className = "game-status win";
         return;
     }
@@ -743,7 +720,7 @@ function startSpin() {
 
     isWheelSpinning = true;
     scrollSpeed = Math.random() * 22 + 40; // Initial velocity
-    wheelStatus.innerText = "Reel is scrolling... 🎰";
+    wheelStatus.innerText = "Reel is scrolling...";
     wheelStatus.className = "game-status";
 
     if (wheelAnimId) cancelAnimationFrame(wheelAnimId);
@@ -758,7 +735,7 @@ function onSpinComplete(landedSegmentIdx) {
 
     if (slot.type === 'miss') {
         unlockedTileIndex = null;
-        wheelStatus.innerText = "❌ MISS! No tile selected. Click SPIN to try again!";
+        wheelStatus.innerText = "MISS! No tile selected. Click SPIN to try again!";
         wheelStatus.className = "game-status lose";
         playTone(200, 0.25);
     } else {
@@ -776,7 +753,7 @@ function onSpinComplete(landedSegmentIdx) {
             wheelStatus.className = "game-status";
         } else {
             unlockedTileIndex = tileIdx;
-            wheelStatus.innerText = `✨ TILE #${tileNum} UNLOCKED! LAUNCHING CHALLENGE... 🚀`;
+            wheelStatus.innerText = `TILE #${tileNum} UNLOCKED! LAUNCHING CHALLENGE...`;
             wheelStatus.className = "game-status win";
             playSuccessFanfare();
 
@@ -857,7 +834,7 @@ function initGrid() {
             if (unlockedTileIndex === i) {
                 openMiniGameModal(i, tile);
             } else {
-                wheelStatus.innerText = `🔒 TILE #${i + 1} IS LOCKED! SPIN TO SELECT!`;
+                wheelStatus.innerText = `TILE #${i + 1} IS LOCKED! SPIN TO SELECT!`;
                 wheelStatus.className = "game-status lose";
                 openSpinWheelModal();
             }
@@ -1049,7 +1026,7 @@ function closeMiniGameModal() {
 
 function showAlreadyCompletedModal(tileNum, solverName) {
     completedTileBadge.innerText = `TILE #${tileNum}`;
-    completedMessage.innerHTML = `This tile has already been unlocked by <strong>${solverName}</strong>! 🎉<br>Spin the reel to select an unsolved tile.`;
+    completedMessage.innerHTML = `This tile has already been unlocked by <strong>${solverName}</strong>!<br>Spin the reel to select an unsolved tile.`;
     completedModal.classList.remove('hidden');
 
     // Auto disappear after 5 seconds
@@ -1091,7 +1068,7 @@ function onMiniGameWin() {
         cancelAnimationFrame(currentGameLoop);
         currentGameLoop = null;
     }
-    minigameStatus.innerText = "✨ CHALLENGE CLEARED! Tile Unlocked ✨";
+    minigameStatus.innerText = "CHALLENGE CLEARED! Tile Unlocked";
     minigameStatus.className = "game-status win";
     btnStartGame.classList.add('hidden');
 

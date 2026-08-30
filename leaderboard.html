@@ -28,7 +28,6 @@
                 <a href="index.html" class="btn btn-sm btn-primary" style="text-decoration: none;">BACK</a>
             </div>
             <h1 class="title">LEADERBOARD & STATS</h1>
-            <p class="subtitle">Real-time rankings of top emblem hunters & tile status</p>
         </header>
 
         <!-- Stats Overview Row -->
@@ -56,7 +55,7 @@
         <!-- Dynamic Bar Chart Card -->
         <main class="leaderboard-card">
             <div class="chart-header">
-                <h2 class="chart-title">🏆 TOP EMBLEM HUNTERS</h2>
+                <h2 class="chart-title">TOP EMBLEM HUNTERS</h2>
                 <span style="font-size: 0.75rem; color: var(--neon-cyan); font-family: 'Orbitron', sans-serif;">LIVE
                     RANKINGS</span>
             </div>
@@ -170,7 +169,6 @@
             const toast = document.createElement('div');
             toast.className = 'toast-notification';
             toast.innerHTML = `
-                <span class="toast-icon">🎉</span>
                 <div>
                     <div class="toast-title">TILE CRACKED!</div>
                     <div>${message}</div>
@@ -190,13 +188,7 @@
         const leaderboardChart = document.getElementById('leaderboardChart');
         const lbTileGrid = document.getElementById('lbTileGrid');
 
-        const TILE_ICONS = [
-            '🦖', '⭐', '⚡', '✨', '🎹', '🎵', '🏺', '🪲', '🧱', '🧩',
-            '🎶', '💫', '⚡', '🏢', '🏛️', '👑', '🔥', '💎', '🚀', '🔮',
-            '🛸', '🎯', '🌟', '🕹️', '👾', '🌈', '🌌', '⚡', '🌀', '🏆',
-            '🗝️', '🛡️', '⚔️', '🪄', '🎩', '🎲', '♟️', '🎳', '🎸', '🥁',
-            '🎺', '🎻', '🪐', '☄️', '🌙', '☀️', '🌋', '🌊', '🌴'
-        ];
+        const TILE_ICONS = Array.from({ length: 50 }, (_, idx) => `${idx + 1}`);
         let previousTilesData = null;
 
         function renderGrid(tilesData) {
@@ -222,7 +214,7 @@
 
                 const icon = document.createElement('span');
                 icon.className = 'tile-icon';
-                icon.innerText = isBroken ? '🔓' : TILE_ICONS[i % TILE_ICONS.length];
+                icon.innerText = isBroken ? 'OPEN' : TILE_ICONS[i % TILE_ICONS.length];
 
                 const label = document.createElement('span');
                 label.style.fontSize = '0.5rem';
@@ -289,7 +281,7 @@
             if (leaderboard.length === 0) {
                 leaderboardChart.innerHTML = `
                     <div style="text-align: center; color: rgba(255,255,255,0.6); padding: 30px 0;">
-                        No tiles cracked yet! Be the first to spin and unlock a tile! 🚀
+                        No tiles cracked yet! Be the first to spin and unlock a tile!
                     </div>
                 `;
             } else {
@@ -297,7 +289,7 @@
                 const maxCount = leaderboard[0].count || 1;
 
                 leaderboard.forEach((player, idx) => {
-                    const rankMedal = idx === 0 ? '🥇 1st' : (idx === 1 ? '🥈 2nd' : (idx === 2 ? '🥉 3rd' : `#${idx + 1}`));
+                    const rankMedal = idx === 0 ? '1st' : (idx === 1 ? '2nd' : (idx === 2 ? '3rd' : `#${idx + 1}`));
                     const barPct = Math.max(8, Math.round((player.count / TOTAL_TILES) * 100));
 
                     const row = document.createElement('div');

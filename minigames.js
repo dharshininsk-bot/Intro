@@ -391,7 +391,7 @@ function runConstellationGame() {
         }
 
         if (isFinished) {
-            minigameStatus.innerText = `✨ CONSTELLATION COMPLETED! ✨`;
+            minigameStatus.innerText = `CONSTELLATION COMPLETED!`;
             minigameStatus.className = "game-status win";
         } else {
             minigameStatus.innerText = `Connect Dot #${nextDotIndex + 1} | Time Left: ${Math.max(0, timeLeft).toFixed(1)}s`;
@@ -463,7 +463,7 @@ function runPianoGame() {
 
     function playPatternDemo() {
         isDemonstrating = true;
-        minigameStatus.innerText = "🎵 Listen closely to the magic melody...";
+        minigameStatus.innerText = "Listen closely to the magic melody...";
         minigameStatus.className = "game-status";
 
         targetSequence.forEach((keyId, idx) => {
@@ -477,7 +477,7 @@ function runPianoGame() {
                 if (idx === targetSequence.length - 1) {
                     setTimeout(() => {
                         isDemonstrating = false;
-                        minigameStatus.innerText = "🎹 Your turn! Tap the piano keys in sequence.";
+                        minigameStatus.innerText = "Your turn! Tap the piano keys in sequence.";
                     }, 400);
                 }
             }, (idx + 1) * 600);
@@ -652,20 +652,20 @@ function runJarShuffleGame() {
         swapQueue.push([s1, s2]);
     }
 
-    minigameStatus.innerText = "⭐ Track which top-down jar holds the star!";
+    minigameStatus.innerText = "Track which top-down jar holds the star!";
     minigameStatus.className = "game-status";
 
     // Reveal star for 1.5 seconds, then begin smooth shuffling
     setTimeout(() => {
         state = 'SHUFFLE';
-        minigameStatus.innerText = "🔀 Watch the jars slide smoothly...";
+        minigameStatus.innerText = "Watch the jars slide smoothly...";
         prepareNextSwap();
     }, 1500);
 
     function prepareNextSwap() {
         if (currentSwapIndex >= swapQueue.length) {
             state = 'GUESS';
-            minigameStatus.innerText = "🔍 Tap the jar containing the star!";
+            minigameStatus.innerText = "Tap the jar containing the star!";
             return;
         }
 
@@ -830,7 +830,7 @@ function runFastFireflyGame() {
 
         mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
 
-        minigameStatus.innerText = "⚡ Tap the super fast glowing firefly!";
+        minigameStatus.innerText = "Tap the super fast glowing firefly!";
         minigameStatus.className = "game-status";
 
         trail.forEach(t => {
@@ -1022,7 +1022,7 @@ function runHanoiGame() {
     function loop() {
         mgCtx.clearRect(0, 0, minigameCanvas.width, minigameCanvas.height);
 
-        minigameStatus.innerText = "🧩 Move all 3 disks to Peg C! Tap peg to select/drop.";
+        minigameStatus.innerText = "Move all 3 disks to Peg C! Tap peg to select/drop.";
         minigameStatus.className = "game-status";
 
         for (let i = 0; i < 3; i++) {

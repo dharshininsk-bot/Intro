@@ -324,6 +324,17 @@ body {
     margin: 6px 0 16px 0;
 }
 
+/* Action Buttons Row (Directly below logo) */
+.action-btn-container {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 380px;
+    justify-content: center;
+    align-items: center;
+    margin: 2px auto 0 auto;
+}
+
 /* Controls & Stats Panel */
 .controls-panel {
     width: 100%;

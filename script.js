@@ -241,7 +241,6 @@ const spinModalCloseBtn = document.getElementById('spinModalCloseBtn');
 const btnOpenSpinWheel = document.getElementById('btnOpenSpinWheel');
 const btnRankings = document.getElementById('btnRankings');
 const reelSingleSlot = document.getElementById('reelSingleSlot');
-const reelSlotBadge = document.getElementById('reelSlotBadge');
 const reelSlotValue = document.getElementById('reelSlotValue');
 const btnSpinReel = document.getElementById('btnSpinReel');
 const wheelStatus = document.getElementById('wheelStatus');
@@ -437,20 +436,17 @@ function getActiveWheelSlots() {
 }
 
 function renderSingleReelSlot(slot) {
-    if (!reelSingleSlot || !reelSlotValue || !reelSlotBadge) return;
+    if (!reelSingleSlot || !reelSlotValue) return;
     if (!slot) {
-        reelSlotBadge.innerText = "STATUS";
         reelSlotValue.innerText = "ALL CLEAR";
         reelSingleSlot.classList.remove('miss-slot');
         return;
     }
 
     if (slot.type === 'miss') {
-        reelSlotBadge.innerText = "NO TILE";
         reelSlotValue.innerText = "MISS";
         reelSingleSlot.classList.add('miss-slot');
     } else {
-        reelSlotBadge.innerText = "TARGET TILE";
         reelSlotValue.innerText = `${slot.value}`;
         reelSingleSlot.classList.remove('miss-slot');
     }
@@ -778,7 +774,7 @@ function updateStats() {
     updateLogoImageEffect();
 
     if (brokenCount >= totalTiles) {
-        if (pageTitleEl) pageTitleEl.innerText = "AR/VR & GAME DEV";
+        if (pageTitleEl) pageTitleEl.innerText = "GAME DEV & AR/VR";
         if (btnOpenSpinWheel) btnOpenSpinWheel.style.display = 'none';
         if (btnRankings) {
             btnRankings.style.flex = 'none';

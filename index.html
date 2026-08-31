@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Magical Logo Unveil - QR Hunt & Realtime Sync</title>
+    <title>Reveal</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,10 +25,8 @@
         <!-- Header -->
         <header class="header">
             <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin-bottom: 6px;">
-                <div class="title-badge">SPIN & WIN</div>
             </div>
             <h1 id="pageTitle" class="title">REVEAL</h1>
-            <p class="subtitle">Spin the reel and crack the tiles to reveal! If you fail a challenge, spin again.</p>
         </header>
 
         <!-- Main Stage Container -->
@@ -44,6 +42,17 @@
                 <div id="tileGrid" class="tile-grid"></div>
             </div>
         </main>
+
+        <!-- Spin Wheel Trigger Button & Leaderboard Link (Directly below logo block) -->
+        <div id="actionBtnContainer" class="action-btn-container">
+            <button id="btnOpenSpinWheel" class="btn btn-primary" style="flex: 2; font-size: 0.85rem; padding: 12px;">
+                SPIN TO SELECT TILE
+            </button>
+            <a id="btnRankings" href="leaderboard.html" class="btn btn-primary"
+                style="flex: 1; text-decoration: none; font-size: 0.85rem; padding: 12px; text-align: center;">
+                LEADERBOARD
+            </a>
+        </div>
 
         <!-- Stats Panel -->
         <section class="controls-panel">
@@ -66,19 +75,6 @@
             <div class="progress-container">
                 <div id="progressBar" class="progress-bar-fill"></div>
             </div>
-
-            <!-- Spin Wheel Trigger Button & Leaderboard Link -->
-            <div id="actionBtnContainer"
-                style="display: flex; gap: 8px; margin-top: 4px; justify-content: center; width: 100%;">
-                <button id="btnOpenSpinWheel" class="btn btn-primary"
-                    style="flex: 2; font-size: 0.82rem; padding: 12px;">
-                    SPIN TO SELECT TILE
-                </button>
-                <a id="btnRankings" href="leaderboard.html" class="btn btn-primary"
-                    style="flex: 1; text-decoration: none; font-size: 0.82rem; padding: 12px; text-align: center;">
-                    LEADERBOARD
-                </a>
-            </div>
         </section>
     </div>
 
@@ -98,7 +94,6 @@
             <div class="modal-body spin-modal-body">
                 <div class="reel-container">
                     <div id="reelSingleSlot" class="reel-single-card">
-                        <div id="reelSlotBadge" class="reel-slot-badge">TARGET TILE</div>
                         <div id="reelSlotValue" class="reel-slot-value">1</div>
                     </div>
                 </div>
@@ -184,7 +179,8 @@
                 <p id="completedMessage" class="modal-desc">has already cracked the tile.</p>
             </div>
             <div class="modal-body" style="padding: 10px 0;">
-                <div style="font-weight: 700; letter-spacing: 2px; color: var(--neon-cyan); margin: 10px 0;">[ UNLOCKED ]</div>
+                <div style="font-weight: 700; letter-spacing: 2px; color: var(--neon-cyan); margin: 10px 0;">[ UNLOCKED
+                    ]</div>
                 <p style="font-size: 0.9rem; color: var(--neon-cyan); font-weight: 600;">SPIN THE WHEEL TO TRY ANOTHER
                     TILE</p>
             </div>

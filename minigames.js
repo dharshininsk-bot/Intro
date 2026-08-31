@@ -123,8 +123,6 @@ function runDinoGame() {
         // Draw Ground
         mgCtx.strokeStyle = '#00f3ff';
         mgCtx.lineWidth = 2;
-        mgCtx.shadowColor = '#00f3ff';
-        mgCtx.shadowBlur = 10;
         mgCtx.beginPath();
         mgCtx.moveTo(0, groundY);
         mgCtx.lineTo(minigameCanvas.width, groundY);
@@ -132,8 +130,6 @@ function runDinoGame() {
 
         // Draw Dino
         mgCtx.fillStyle = '#ff007f';
-        mgCtx.shadowColor = '#ff007f';
-        mgCtx.shadowBlur = 12;
         mgCtx.fillRect(dino.x, dino.y, dino.width, dino.height);
         mgCtx.fillStyle = '#ffffff';
         mgCtx.fillRect(dino.x + 14, dino.y + 6, 4, 4);
@@ -144,8 +140,6 @@ function runDinoGame() {
             obs.x -= obs.speed;
 
             mgCtx.fillStyle = '#ffe600';
-            mgCtx.shadowColor = '#ffe600';
-            mgCtx.shadowBlur = 12;
             mgCtx.fillRect(obs.x, groundY - obs.height, obs.width, obs.height);
 
             // Collision Check
@@ -243,8 +237,6 @@ function runStarCatcherGame() {
 
             mgCtx.save();
             mgCtx.fillStyle = s.color;
-            mgCtx.shadowColor = s.color;
-            mgCtx.shadowBlur = 12;
             mgCtx.font = `${s.size * 1.4}px sans-serif`;
             mgCtx.textAlign = 'center';
             mgCtx.textBaseline = 'middle';
@@ -313,8 +305,6 @@ function runQuickClickGame() {
         if (currentTarget) {
             mgCtx.strokeStyle = '#00f3ff';
             mgCtx.lineWidth = 4;
-            mgCtx.shadowColor = '#00f3ff';
-            mgCtx.shadowBlur = 18;
             mgCtx.beginPath();
             mgCtx.arc(currentTarget.x, currentTarget.y, currentTarget.radius, 0, Math.PI * 2);
             mgCtx.stroke();
@@ -401,8 +391,6 @@ function runConstellationGame() {
         // Draw Lines (including closing line back to Dot 1 when Dot 8 is connected!)
         mgCtx.strokeStyle = isFinished ? '#ffe600' : '#ff007f';
         mgCtx.lineWidth = isFinished ? 4 : 3;
-        mgCtx.shadowColor = isFinished ? '#ffe600' : '#ff007f';
-        mgCtx.shadowBlur = isFinished ? 20 : 12;
 
         if (nextDotIndex > 0) {
             mgCtx.beginPath();
@@ -424,8 +412,6 @@ function runConstellationGame() {
 
             mgCtx.save();
             mgCtx.fillStyle = isConnected ? '#ff007f' : (isNext ? '#00f3ff' : '#202550');
-            mgCtx.shadowColor = isNext ? '#00f3ff' : '#ff007f';
-            mgCtx.shadowBlur = isNext ? 16 : 8;
 
             mgCtx.beginPath();
             mgCtx.arc(dot.x, dot.y, isNext ? 16 : 12, 0, Math.PI * 2);
@@ -521,8 +507,6 @@ function runPianoGame() {
             mgCtx.fillStyle = isHighlighted ? k.color : 'rgba(15, 20, 45, 0.9)';
             mgCtx.strokeStyle = k.color;
             mgCtx.lineWidth = 2;
-            mgCtx.shadowColor = k.color;
-            mgCtx.shadowBlur = isHighlighted ? 22 : 8;
 
             mgCtx.beginPath();
             mgCtx.roundRect(k.x, 60, k.width, 140, 10);
@@ -603,8 +587,6 @@ function runMagicTilesGame() {
 
             mgCtx.save();
             mgCtx.fillStyle = '#00f3ff';
-            mgCtx.shadowColor = '#00f3ff';
-            mgCtx.shadowBlur = 12;
             mgCtx.fillRect(tile.lane * laneWidth + 4, tile.y, laneWidth - 8, tile.height);
             mgCtx.restore();
 
@@ -746,8 +728,6 @@ function runJarShuffleGame() {
             mgCtx.fillStyle = 'rgba(15, 25, 55, 0.95)';
             mgCtx.strokeStyle = '#00f3ff';
             mgCtx.lineWidth = 4;
-            mgCtx.shadowColor = '#00f3ff';
-            mgCtx.shadowBlur = 16;
 
             mgCtx.beginPath();
             mgCtx.arc(j.x, j.y, jarRadius, 0, Math.PI * 2);
@@ -770,8 +750,6 @@ function runJarShuffleGame() {
             // Draw Star inside Jar if in REVEAL or WIN state
             if (j.hasStar && (state === 'REVEAL' || state === 'WIN')) {
                 mgCtx.fillStyle = '#ffe600';
-                mgCtx.shadowColor = '#ffe600';
-                mgCtx.shadowBlur = 24;
                 mgCtx.font = '28px sans-serif';
                 mgCtx.textAlign = 'center';
                 mgCtx.textBaseline = 'middle';
@@ -839,8 +817,6 @@ function runFastFireflyGame() {
                 mgCtx.save();
                 mgCtx.globalAlpha = t.alpha;
                 mgCtx.fillStyle = '#ffe600';
-                mgCtx.shadowColor = '#ffe600';
-                mgCtx.shadowBlur = 10;
                 mgCtx.beginPath();
                 mgCtx.arc(t.x, t.y, 4, 0, Math.PI * 2);
                 mgCtx.fill();
@@ -850,8 +826,6 @@ function runFastFireflyGame() {
 
         mgCtx.save();
         mgCtx.fillStyle = '#ffe600';
-        mgCtx.shadowColor = '#ffe600';
-        mgCtx.shadowBlur = 24;
         mgCtx.beginPath();
         mgCtx.arc(firefly.x, firefly.y, firefly.radius, 0, Math.PI * 2);
         mgCtx.fill();
@@ -948,16 +922,12 @@ function runTowerStackerGame() {
         stack.forEach((b, idx) => {
             mgCtx.save();
             mgCtx.fillStyle = idx === 0 ? '#00f3ff' : '#ff007f';
-            mgCtx.shadowColor = '#ff007f';
-            mgCtx.shadowBlur = 10;
             mgCtx.fillRect(b.x, b.y, b.width, blockHeight - 2);
             mgCtx.restore();
         });
 
         mgCtx.save();
         mgCtx.fillStyle = '#ffe600';
-        mgCtx.shadowColor = '#ffe600';
-        mgCtx.shadowBlur = 14;
         mgCtx.fillRect(currentBlock.x, currentBlock.y, currentBlock.width, blockHeight - 2);
         mgCtx.restore();
 
@@ -1032,8 +1002,6 @@ function runHanoiGame() {
             mgCtx.save();
             mgCtx.strokeStyle = isSelected ? '#ffe600' : '#00f3ff';
             mgCtx.lineWidth = 4;
-            mgCtx.shadowColor = isSelected ? '#ffe600' : '#00f3ff';
-            mgCtx.shadowBlur = isSelected ? 16 : 8;
 
             mgCtx.beginPath();
             mgCtx.moveTo(x, 70);
@@ -1052,8 +1020,6 @@ function runHanoiGame() {
 
                 mgCtx.save();
                 mgCtx.fillStyle = diskColors[diskSize];
-                mgCtx.shadowColor = diskColors[diskSize];
-                mgCtx.shadowBlur = 12;
 
                 const isLifted = isSelected && level === pegs[i].length - 1;
                 const finalY = isLifted ? dY - 25 : dY;

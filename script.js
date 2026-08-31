@@ -3,13 +3,14 @@
  */
 
 // ==========================================
-// 1. NEON BUTTERFLIES & BACKGROUND CANVAS
+// 1. PARTICLES & SHATTER EFFECTS CANVAS
 // ==========================================
-const canvas = document.getElementById('butterflyCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById('particleCanvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
 
 let width, height;
 function resizeCanvas() {
+    if (!canvas) return;
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
 }
@@ -99,104 +100,12 @@ class TileShard {
     }
 }
 
-class NeonButterfly {
-    constructor() {
-        this.reset();
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-    }
-
-    reset() {
-        this.x = Math.random() < 0.5 ? -30 : width + 30;
-        this.y = Math.random() * height;
-        this.size = Math.random() * 12 + 10;
-        this.speed = Math.random() * 1.5 + 1;
-
-        const targetX = Math.random() * width;
-        const targetY = Math.random() * height;
-        const angle = Math.atan2(targetY - this.y, targetX - this.x);
-
-        this.vx = Math.cos(angle) * this.speed;
-        this.vy = Math.sin(angle) * this.speed;
-        this.wingAngle = Math.random() * Math.PI;
-        this.wingSpeed = Math.random() * 0.15 + 0.1;
-        this.color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
-        this.turnTimer = 0;
-    }
-
-    update() {
-        this.turnTimer++;
-        if (this.turnTimer > 120) {
-            this.turnTimer = 0;
-            const heading = Math.atan2(this.vy, this.vx) + (Math.random() - 0.5) * 0.8;
-            this.vx = Math.cos(heading) * this.speed;
-            this.vy = Math.sin(heading) * this.speed;
-        }
-
-        this.x += this.vx;
-        this.y += this.vy;
-        this.wingAngle += this.wingSpeed;
-
-        if (this.x < -50 || this.x > width + 50 || this.y < -50 || this.y > height + 50) {
-            this.reset();
-        }
-
-        if (Math.random() < 0.35) {
-            sparkles.push(new Sparkle(this.x, this.y, this.color.glow));
-        }
-    }
-
-    draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        const heading = Math.atan2(this.vy, this.vx) + Math.PI / 2;
-        ctx.rotate(heading);
-
-        const wingScale = Math.sin(this.wingAngle);
-
-        ctx.shadowColor = this.color.glow;
-        ctx.shadowBlur = 14;
-        ctx.fillStyle = this.color.fill;
-        ctx.strokeStyle = this.color.glow;
-        ctx.lineWidth = 1.5;
-
-        // Wings
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(
-            -this.size * 2.2 * wingScale, -this.size * 1.8,
-            -this.size * 2.8 * wingScale, this.size * 0.2,
-            0, this.size * 0.5
-        );
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(
-            this.size * 2.2 * wingScale, -this.size * 1.8,
-            this.size * 2.8 * wingScale, this.size * 0.2,
-            0, this.size * 0.5
-        );
-        ctx.fill();
-        ctx.stroke();
-
-        // Body
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 1.5, this.size * 0.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-    }
-}
-
-const butterflies = Array.from({ length: 14 }, () => new NeonButterfly());
 const sparkles = [];
 const shards = [];
+let particlesAnimId = null;
 
-function animateCanvas() {
+function animateParticles() {
+    if (!ctx) return;
     ctx.clearRect(0, 0, width, height);
 
     for (let i = sparkles.length - 1; i >= 0; i--) {
@@ -211,22 +120,25 @@ function animateCanvas() {
         if (shards[i].life <= 0) shards.splice(i, 1);
     }
 
-    butterflies.forEach(b => {
-        b.update();
-        b.draw(ctx);
-    });
-
-    requestAnimationFrame(animateCanvas);
+    if (sparkles.length > 0 || shards.length > 0) {
+        particlesAnimId = requestAnimationFrame(animateParticles);
+    } else {
+        ctx.clearRect(0, 0, width, height);
+        particlesAnimId = null;
+    }
 }
-animateCanvas();
 
 function spawnShatterBurst(screenX, screenY) {
+    if (!ctx) return;
     const color = NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)].glow;
     for (let i = 0; i < 24; i++) {
         shards.push(new TileShard(screenX, screenY, color));
     }
     for (let i = 0; i < 15; i++) {
         sparkles.push(new Sparkle(screenX, screenY, '#ffffff'));
+    }
+    if (!particlesAnimId) {
+        particlesAnimId = requestAnimationFrame(animateParticles);
     }
 }
 
@@ -311,7 +223,6 @@ const tilesBrokenEl = document.getElementById('tilesBroken');
 const progressTextEl = document.getElementById('progressText');
 const progressBarEl = document.getElementById('progressBar');
 const winBanner = document.getElementById('winBanner');
-const btnRehide = document.getElementById('btnRehide');
 
 // Mini-Game Modal Elements
 const minigameModal = document.getElementById('minigameModal');
@@ -329,8 +240,9 @@ const spinWheelModal = document.getElementById('spinWheelModal');
 const spinModalCloseBtn = document.getElementById('spinModalCloseBtn');
 const btnOpenSpinWheel = document.getElementById('btnOpenSpinWheel');
 const btnRankings = document.getElementById('btnRankings');
-const spinnerCanvas = document.getElementById('spinnerCanvas') || document.getElementById('wheelCanvas');
-const sCtx = spinnerCanvas ? spinnerCanvas.getContext('2d') : null;
+const reelSingleSlot = document.getElementById('reelSingleSlot');
+const reelSlotBadge = document.getElementById('reelSlotBadge');
+const reelSlotValue = document.getElementById('reelSlotValue');
 const btnSpinReel = document.getElementById('btnSpinReel');
 const wheelStatus = document.getElementById('wheelStatus');
 
@@ -339,7 +251,6 @@ const playerNameModal = document.getElementById('playerNameModal');
 const initialPlayerNameInput = document.getElementById('initialPlayerNameInput');
 const btnSaveInitialPlayerName = document.getElementById('btnSaveInitialPlayerName');
 const spinPlayerNameDisplay = document.getElementById('spinPlayerNameDisplay');
-const btnEditPlayerName = document.getElementById('btnEditPlayerName');
 const playerNameError = document.getElementById('playerNameError');
 
 // Name Prompt Modal Elements
@@ -374,12 +285,16 @@ let previousTilesData = null;
 function updateLogoImageEffect() {
     const logoImg = document.getElementById('logoImage');
     if (!logoImg) return;
-    const remainingRatio = totalTiles > 0 ? (totalTiles - brokenCount) / totalTiles : 0;
-    // Enhanced non-linear blur scale (pow 0.6) so blur stays strong even when only 1 or 2 tiles are left
-    const effectiveRatio = Math.pow(remainingRatio, 0.6);
-    const blurPx = (effectiveRatio * 35).toFixed(2);
-    const brightnessPct = ((1 - effectiveRatio * 0.75) * 100).toFixed(2);
-    logoImg.style.filter = `blur(${blurPx}px) brightness(${brightnessPct}%)`;
+    if (totalTiles > 0 && brokenCount >= totalTiles) {
+        if (!logoImg.src || !logoImg.src.includes('logo_trial.jpg')) {
+            logoImg.src = 'logo_trial.jpg';
+        }
+        logoImg.classList.add('loaded');
+        logoImg.style.display = 'block';
+    } else {
+        logoImg.classList.remove('loaded');
+        logoImg.style.display = 'none';
+    }
 }
 
 let savedPlayerName = localStorage.getItem('neon_player_name') || '';
@@ -387,9 +302,6 @@ let savedPlayerName = localStorage.getItem('neon_player_name') || '';
 function updatePlayerNameDisplay() {
     if (spinPlayerNameDisplay) {
         spinPlayerNameDisplay.innerText = savedPlayerName.trim() ? savedPlayerName : 'Not Set';
-    }
-    if (btnEditPlayerName) {
-        btnEditPlayerName.style.display = 'none'; // Name cannot be changed after saving
     }
 }
 
@@ -501,8 +413,12 @@ function getGameConfigForTile(tileIndex) {
 const TILE_ICONS = Array.from({ length: 50 }, (_, idx) => `${idx + 1}`);
 
 // ==========================================
-// 3.2 HORIZONTAL SPINNER REEL ENGINE
+// 3.2 SINGLE ELEMENT SPINNER REEL ENGINE
 // ==========================================
+let isWheelSpinning = false;
+let currentReelSlotIndex = 0;
+let spinTimeoutId = null;
+
 function getActiveWheelSlots() {
     const activeSlots = [];
     for (let i = 1; i <= TOTAL_TILES; i++) {
@@ -513,193 +429,51 @@ function getActiveWheelSlots() {
         const isBroken = (tileInfo && tileInfo.broken) || (targetTile && targetTile.classList.contains('broken'));
 
         if (!isBroken) {
-            activeSlots.push({ type: 'number', value: i, label: `${i}` });
+            activeSlots.push({ type: 'number', value: i, label: `TILE #${i}` });
             activeSlots.push({ type: 'miss', value: null, label: 'MISS' });
         }
     }
     return activeSlots;
 }
 
-let isWheelSpinning = false;
-let scrollX = 0;
-let scrollSpeed = 0;
-let wheelAnimId = null;
-let lastSegmentTickIndex = -1;
-
-const CARD_WIDTH = 96;
-const CARD_GAP = 12;
-const STEP = CARD_WIDTH + CARD_GAP; // 108px per card slot
-
-function drawHorizontalSpinner() {
-    if (!spinnerCanvas || !sCtx) return;
-    const width = spinnerCanvas.width;
-    const height = spinnerCanvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-
-    sCtx.clearRect(0, 0, width, height);
-
-    const activeSlots = getActiveWheelSlots();
-    const totalSlots = activeSlots.length;
-
-    if (totalSlots === 0) {
-        sCtx.save();
-        sCtx.fillStyle = '#0a0d24';
-        sCtx.strokeStyle = '#ffe600';
-        sCtx.lineWidth = 3;
-        sCtx.beginPath();
-        if (sCtx.roundRect) {
-            sCtx.roundRect(10, 10, width - 20, height - 20, 12);
-        } else {
-            sCtx.rect(10, 10, width - 20, height - 20);
-        }
-        sCtx.fill();
-        sCtx.stroke();
-
-        sCtx.fillStyle = '#ffe600';
-        sCtx.font = 'bold 18px "Orbitron", sans-serif';
-        sCtx.textAlign = 'center';
-        sCtx.textBaseline = 'middle';
-        sCtx.fillText('ALL TILES CLEARED!', cx, cy);
-        sCtx.restore();
+function renderSingleReelSlot(slot) {
+    if (!reelSingleSlot || !reelSlotValue || !reelSlotBadge) return;
+    if (!slot) {
+        reelSlotBadge.innerText = "STATUS";
+        reelSlotValue.innerText = "ALL CLEAR";
+        reelSingleSlot.classList.remove('miss-slot');
         return;
     }
 
-    const trackLength = totalSlots * STEP;
-    const normalizedScroll = ((scrollX % trackLength) + trackLength) % trackLength;
-
-    const visibleCount = Math.ceil(width / STEP) + 3;
-    const centerSlotFloat = normalizedScroll / STEP;
-    const startIdx = Math.floor(centerSlotFloat) - Math.floor(visibleCount / 2);
-
-    for (let k = startIdx; k <= startIdx + visibleCount; k++) {
-        const slotIndex = ((k % totalSlots) + totalSlots) % totalSlots;
-        const slot = activeSlots[slotIndex];
-        const itemCenterX = cx + (k * STEP - normalizedScroll);
-
-        if (itemCenterX < -CARD_WIDTH || itemCenterX > width + CARD_WIDTH) continue;
-
-        const distFromCenter = Math.abs(itemCenterX - cx);
-        const isCloseToCenter = distFromCenter < STEP / 2;
-
-        sCtx.save();
-        sCtx.translate(itemCenterX, cy);
-
-        const cardW = CARD_WIDTH;
-        const cardH = 92;
-        const cardRadius = 10;
-
-        if (slot.type === 'number') {
-            const colorObj = NEON_COLORS[(slot.value - 1) % NEON_COLORS.length];
-
-            sCtx.fillStyle = isCloseToCenter ? 'rgba(18, 22, 50, 0.95)' : 'rgba(12, 15, 36, 0.85)';
-            sCtx.strokeStyle = isCloseToCenter ? colorObj.glow : colorObj.fill.replace('0.4', '0.7');
-            sCtx.lineWidth = isCloseToCenter ? 2.5 : 1.2;
-            if (isCloseToCenter) {
-                sCtx.shadowColor = colorObj.glow;
-                sCtx.shadowBlur = 14;
-            }
-
-            sCtx.beginPath();
-            if (sCtx.roundRect) {
-                sCtx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, cardRadius);
-            } else {
-                sCtx.rect(-cardW / 2, -cardH / 2, cardW, cardH);
-            }
-            sCtx.fill();
-            sCtx.stroke();
-
-            sCtx.shadowBlur = 0;
-            sCtx.textAlign = 'center';
-            sCtx.textBaseline = 'middle';
-
-            sCtx.fillStyle = '#ffffff';
-            sCtx.font = 'bold 24px "Orbitron", sans-serif';
-            sCtx.shadowColor = colorObj.glow;
-            sCtx.shadowBlur = 8;
-            sCtx.fillText(`${slot.value}`, 0, 0);
-        } else {
-            sCtx.fillStyle = isCloseToCenter ? 'rgba(32, 10, 24, 0.95)' : 'rgba(18, 8, 18, 0.85)';
-            sCtx.strokeStyle = isCloseToCenter ? '#ff007f' : 'rgba(255, 0, 127, 0.45)';
-            sCtx.lineWidth = isCloseToCenter ? 2.5 : 1.2;
-            if (isCloseToCenter) {
-                sCtx.shadowColor = '#ff007f';
-                sCtx.shadowBlur = 14;
-            }
-
-            sCtx.beginPath();
-            if (sCtx.roundRect) {
-                sCtx.roundRect(-cardW / 2, -cardH / 2, cardW, cardH, cardRadius);
-            } else {
-                sCtx.rect(-cardW / 2, -cardH / 2, cardW, cardH);
-            }
-            sCtx.fill();
-            sCtx.stroke();
-
-            sCtx.shadowBlur = 0;
-            sCtx.textAlign = 'center';
-            sCtx.textBaseline = 'middle';
-
-            sCtx.fillStyle = '#ff007f';
-            sCtx.font = 'bold 20px "Orbitron", sans-serif';
-            sCtx.shadowColor = '#ff007f';
-            sCtx.shadowBlur = 8;
-            sCtx.fillText('MISS', 0, 0);
-        }
-
-        sCtx.restore();
+    if (slot.type === 'miss') {
+        reelSlotBadge.innerText = "NO TILE";
+        reelSlotValue.innerText = "MISS";
+        reelSingleSlot.classList.add('miss-slot');
+    } else {
+        reelSlotBadge.innerText = "TARGET TILE";
+        reelSlotValue.innerText = `${slot.value}`;
+        reelSingleSlot.classList.remove('miss-slot');
     }
 
-    // Vignette / Shadow edges
-    const leftGrad = sCtx.createLinearGradient(0, 0, 60, 0);
-    leftGrad.addColorStop(0, 'rgba(6, 8, 24, 0.95)');
-    leftGrad.addColorStop(1, 'rgba(6, 8, 24, 0)');
-    sCtx.fillStyle = leftGrad;
-    sCtx.fillRect(0, 0, 60, height);
-
-    const rightGrad = sCtx.createLinearGradient(width - 60, 0, width, 0);
-    rightGrad.addColorStop(0, 'rgba(6, 8, 24, 0)');
-    rightGrad.addColorStop(1, 'rgba(6, 8, 24, 0.95)');
-    sCtx.fillStyle = rightGrad;
-    sCtx.fillRect(width - 60, 0, 60, height);
+    // Quick micro-tick animation
+    reelSingleSlot.classList.add('spin-tick');
+    setTimeout(() => {
+        if (reelSingleSlot) reelSingleSlot.classList.remove('spin-tick');
+    }, 70);
 }
 
-function animateHorizontalSpinner() {
-    if (!isWheelSpinning) return;
-
+function updateReelDisplay() {
     const activeSlots = getActiveWheelSlots();
-    const totalSlots = activeSlots.length;
-
-    if (totalSlots === 0) {
-        isWheelSpinning = false;
+    if (activeSlots.length === 0) {
+        renderSingleReelSlot(null);
+        if (wheelStatus) {
+            wheelStatus.innerText = "ALL TILES CLEARED!";
+            wheelStatus.className = "game-status win";
+        }
         return;
     }
-
-    scrollX += scrollSpeed;
-    scrollSpeed *= 0.983;
-
-    // Tick SFX per card passing center
-    const currentSegmentIdx = Math.floor((scrollX + STEP / 2) / STEP);
-    if (currentSegmentIdx !== lastSegmentTickIndex) {
-        lastSegmentTickIndex = currentSegmentIdx;
-        playTone(650 + Math.min(300, scrollSpeed * 8), 0.02);
-    }
-
-    drawHorizontalSpinner();
-
-    if (scrollSpeed <= 0.35) {
-        scrollX = Math.round(scrollX / STEP) * STEP;
-        scrollSpeed = 0;
-        isWheelSpinning = false;
-        drawHorizontalSpinner();
-
-        const trackLength = totalSlots * STEP;
-        const finalNormalized = ((scrollX % trackLength) + trackLength) % trackLength;
-        const landedIndex = Math.round(finalNormalized / STEP) % totalSlots;
-        onSpinComplete(landedIndex);
-    } else {
-        wheelAnimId = requestAnimationFrame(animateHorizontalSpinner);
-    }
+    const previewSlot = activeSlots.find(s => s.type === 'number') || activeSlots[0];
+    renderSingleReelSlot(previewSlot);
 }
 
 function startSpin() {
@@ -719,18 +493,66 @@ function startSpin() {
     }
 
     isWheelSpinning = true;
-    scrollSpeed = Math.random() * 22 + 40; // Initial velocity
-    wheelStatus.innerText = "Reel is scrolling...";
+    wheelStatus.innerText = "Reel is spinning...";
     wheelStatus.className = "game-status";
+    if (btnSpinReel) btnSpinReel.disabled = true;
 
-    if (wheelAnimId) cancelAnimationFrame(wheelAnimId);
-    animateHorizontalSpinner();
+    if (spinTimeoutId) clearTimeout(spinTimeoutId);
+
+    // Pick a truly random landing target from the entire set of unbroken slots
+    const targetSlot = activeSlots[Math.floor(Math.random() * activeSlots.length)];
+
+    // Timing curve summing to 4.0s (4000ms) with gentle deceleration (~1/3s per option, no jitter)
+    const stepDelays = [
+        180, 190, 200, 210, 230, 250, 280, 320, 370, 440, 530, 640, 160
+    ];
+    const totalSteps = stepDelays.length;
+
+    // Generate a diverse scroll sequence spanning across all areas of the board
+    const spinSequence = [];
+    let lastVal = null;
+    for (let i = 0; i < totalSteps - 1; i++) {
+        let randSlot;
+        let attempts = 0;
+        do {
+            randSlot = activeSlots[Math.floor(Math.random() * activeSlots.length)];
+            attempts++;
+        } while (attempts < 10 && randSlot.value === lastVal);
+        lastVal = randSlot.value;
+        spinSequence.push(randSlot);
+    }
+    // Final step lands decisively on targetSlot!
+    spinSequence.push(targetSlot);
+
+    let step = 0;
+
+    function stepReel() {
+        const currentSlot = spinSequence[step];
+        renderSingleReelSlot(currentSlot);
+
+        // Gentle audio tick per step
+        const toneFreq = currentSlot.type === 'miss' ? 380 : 620 + ((currentSlot.value || 1) % 6) * 30;
+        playTone(toneFreq, 0.03);
+
+        if (step >= totalSteps - 1) {
+            // Spin completed (4.0s elapsed)
+            isWheelSpinning = false;
+            if (btnSpinReel) btnSpinReel.disabled = false;
+            onSpinComplete(currentSlot);
+        } else {
+            const delay = stepDelays[step];
+            step++;
+            spinTimeoutId = setTimeout(stepReel, delay);
+        }
+    }
+
+    stepReel();
 }
 
-function onSpinComplete(landedSegmentIdx) {
+function onSpinComplete(slotOrIdx) {
     const activeSlots = getActiveWheelSlots();
     if (activeSlots.length === 0) return;
-    const slot = activeSlots[landedSegmentIdx];
+    const slot = (typeof slotOrIdx === 'object' && slotOrIdx !== null) ? slotOrIdx : activeSlots[slotOrIdx];
     if (!slot) return;
 
     if (slot.type === 'miss') {
@@ -769,7 +591,7 @@ function onSpinComplete(landedSegmentIdx) {
 function openSpinWheelModal() {
     updatePlayerNameDisplay();
     spinWheelModal.classList.remove('hidden');
-    drawHorizontalSpinner();
+    updateReelDisplay();
 }
 
 function closeSpinWheelModal() {
@@ -784,10 +606,8 @@ if (btnSpinReel) {
     btnSpinReel.addEventListener('click', startSpin);
 }
 
-// Spinner Canvas click event to trigger spin by clicking anywhere on the reel
-if (spinnerCanvas) {
-    spinnerCanvas.style.cursor = 'pointer';
-    spinnerCanvas.addEventListener('click', () => {
+if (reelSingleSlot) {
+    reelSingleSlot.addEventListener('click', () => {
         if (!isWheelSpinning) {
             startSpin();
         }
@@ -894,7 +714,7 @@ function handleRealtimeUpdate(tilesData) {
 
     brokenCount = currentBroken;
     updateStats();
-    drawHorizontalSpinner();
+    updateReelDisplay();
 
     if (totalTiles > 0 && brokenCount >= totalTiles) {
         triggerVictory();
@@ -938,7 +758,7 @@ function onClick(tileElement, solverName = "A Player") {
         tileElement.classList.add('broken');
 
         updateStats();
-        drawSpinWheel();
+        updateReelDisplay();
 
         if (brokenCount >= totalTiles) {
             triggerVictory();
@@ -982,9 +802,6 @@ function triggerVictory() {
     setTimeout(() => {
         if (winBanner) winBanner.classList.remove('hidden');
         playSuccessFanfare();
-        for (let i = 0; i < 8; i++) {
-            butterflies.push(new NeonButterfly());
-        }
     }, 300);
 }
 

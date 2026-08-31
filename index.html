@@ -15,8 +15,8 @@
 </head>
 
 <body>
-    <!-- Fullscreen Canvas for Neon Butterflies & Magical Particles -->
-    <canvas id="butterflyCanvas"></canvas>
+    <!-- Particles / Shatter Effects Canvas -->
+    <canvas id="particleCanvas"></canvas>
 
     <!-- Side Toast Notifications Container -->
     <div id="sideToastContainer" class="side-toast-container"></div>
@@ -37,8 +37,8 @@
                 <!-- Background Neon Glow -->
                 <div class="neon-backdrop-glow"></div>
 
-                <!-- Hidden Logo Image -->
-                <img id="logoImage" src="logo_trial.jpg" alt="Hidden Logo" />
+                <!-- Hidden Logo Image (loaded only when all tiles are cleared) -->
+                <img id="logoImage" src="" alt="Revealed Logo" class="hidden" />
 
                 <!-- Overlay Tile Grid (4x4) -->
                 <div id="tileGrid" class="tile-grid"></div>
@@ -88,7 +88,7 @@
             <button id="spinModalCloseBtn" class="modal-close">&times;</button>
             <div class="modal-header">
                 <h2 class="modal-title">SPIN TO UNLOCK TILE </h2>
-                <p class="modal-desc">Reel scrolling! Spin to land on your next tile challenge.</p>
+                <p class="modal-desc">Spin the single reel to land on your next tile challenge!</p>
                 <div id="playerDisplayTag" class="player-tag"
                     style="margin-top: 6px; font-size: 0.78rem; color: var(--neon-cyan);">
                     Player: <strong id="spinPlayerNameDisplay">Hunter</strong>
@@ -96,11 +96,11 @@
             </div>
 
             <div class="modal-body spin-modal-body">
-                <div class="spinner-wrapper">
-                    <div class="spinner-indicator-top">▼</div>
-                    <div class="spinner-indicator-line"></div>
-                    <div class="spinner-indicator-bottom">▲</div>
-                    <canvas id="spinnerCanvas" width="520" height="130"></canvas>
+                <div class="reel-container">
+                    <div id="reelSingleSlot" class="reel-single-card">
+                        <div id="reelSlotBadge" class="reel-slot-badge">TARGET TILE</div>
+                        <div id="reelSlotValue" class="reel-slot-value">1</div>
+                    </div>
                 </div>
             </div>
 

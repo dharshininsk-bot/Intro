@@ -37,8 +37,8 @@ body {
     padding: 10px 0;
 }
 
-/* Background Canvas for Butterflies */
-#butterflyCanvas {
+/* Particles Canvas for Shatter Effects */
+#particleCanvas {
     position: fixed;
     top: 0;
     left: 0;
@@ -155,10 +155,16 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
+    display: none;
     position: relative;
     z-index: 1;
-    transition: filter 0.5s ease;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+#logoImage.loaded {
+    display: block;
+    opacity: 1;
 }
 
 /* Overlay Tile Grid */
@@ -562,10 +568,10 @@ body {
 }
 
 /* ==========================================
- * HORIZONTAL SPINNER REEL STYLING
+ * SINGLE ELEMENT SPINNER REEL STYLING
  * ========================================== */
 .spin-modal-card {
-    max-width: 580px;
+    max-width: 440px;
     width: 95%;
     background: rgba(10, 12, 32, 0.98);
     border: 2px solid var(--neon-cyan);
@@ -577,72 +583,77 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 8px 0;
+    padding: 10px 0;
     width: 100%;
 }
 
-.spinner-wrapper {
+.reel-container {
     position: relative;
     width: 100%;
-    max-width: 520px;
-    height: 130px;
-    background: #060818;
-    border-radius: 12px;
-    border: 2px solid rgba(0, 243, 255, 0.4);
-    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 243, 255, 0.2);
-    overflow: hidden;
+    max-width: 320px;
+    margin: 6px auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 6px 0;
 }
 
-.spinner-indicator-line {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 3px;
-    transform: translateX(-50%);
-    background: linear-gradient(180deg, var(--neon-gold), #ffffff, var(--neon-gold));
-    box-shadow: 0 0 12px var(--neon-gold), 0 0 24px #ffffff;
-    z-index: 15;
-    pointer-events: none;
-}
-
-.spinner-indicator-top {
-    position: absolute;
-    top: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 16;
-    font-size: 1.1rem;
-    color: var(--neon-gold);
-    text-shadow: 0 0 10px var(--neon-gold);
-    pointer-events: none;
-    line-height: 1;
-    animation: pointerPulse 1.2s infinite alternate ease-in-out;
-}
-
-.spinner-indicator-bottom {
-    position: absolute;
-    bottom: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 16;
-    font-size: 1.1rem;
-    color: var(--neon-gold);
-    text-shadow: 0 0 10px var(--neon-gold);
-    pointer-events: none;
-    line-height: 1;
-}
-
-#spinnerCanvas {
+.reel-single-card {
     width: 100%;
-    height: 100%;
-    display: block;
+    min-height: 130px;
+    background: linear-gradient(145deg, rgba(16, 20, 48, 0.95), rgba(8, 10, 26, 0.98));
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.4), inset 0 0 15px rgba(0, 243, 255, 0.15);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 14px 16px;
+    transition: transform 0.08s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    user-select: none;
     cursor: pointer;
-    background: transparent;
+}
+
+.reel-single-card:hover {
+    transform: scale(1.02);
+}
+
+.reel-single-card.miss-slot {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 25px rgba(255, 0, 127, 0.45), inset 0 0 15px rgba(255, 0, 127, 0.2);
+}
+
+.reel-single-card.spin-tick {
+    transform: scale(1.06);
+}
+
+.reel-slot-badge {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--neon-cyan);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+.reel-single-card.miss-slot .reel-slot-badge {
+    color: var(--neon-pink);
+}
+
+.reel-slot-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow: 0 0 16px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+    line-height: 1;
+}
+
+.reel-single-card.miss-slot .reel-slot-value {
+    color: #ff007f;
+    text-shadow: 0 0 16px var(--neon-pink), 0 0 30px var(--neon-pink);
+    font-size: 2.2rem;
 }
 
 /* ==========================================
